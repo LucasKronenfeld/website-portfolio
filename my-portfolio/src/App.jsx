@@ -7,6 +7,7 @@ export default function App() {
         <Link to="/">Home</Link>
         <Link to="/resume">Resume</Link>
         <Link to="/portfolio">Portfolio</Link>
+        <Link to="/About">About</Link>
       </nav>
       <div className="mt-4 w-full max-w-3xl">
         <Outlet />
