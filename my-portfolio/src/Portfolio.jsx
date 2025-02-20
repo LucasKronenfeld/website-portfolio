@@ -23,7 +23,7 @@ export default function Portfolio() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-background rounded-lg p-8">
       <div className="max-w-screen-2xl mx-auto p-4 relative">
         {/* Portfolio Title */}
         <h1 className="text-4xl font-bold text-text text-center mb-8">Portfolio</h1>
