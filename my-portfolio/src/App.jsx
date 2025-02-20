@@ -11,7 +11,7 @@ export default function App() {
       </div>
 
       {/* Page content will be rendered here */}
-      <div className="mt-4 w-full max-w-3xl bg-background text-text rounded-lg shadow-lg">
+      <div className="mt-4 w-full max-w-6xl bg-accent text-text rounded-lg shadow-lg p-6">
         <Outlet />
       </div>
     </div>
