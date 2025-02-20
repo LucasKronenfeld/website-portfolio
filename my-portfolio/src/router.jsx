@@ -5,6 +5,7 @@ import Resume from "./Resume";
 import Portfolio from "./Portfolio";
 import NotFound from "./NotFound";
 import About from "./About";
+import Projects from "./Projects";
 
 const router = createBrowserRouter([
   {
@@ -15,6 +16,7 @@ const router = createBrowserRouter([
       { path: "resume", element: <Resume /> },
       { path: "portfolio", element: <Portfolio /> },
       { path: "About", element: <About /> },
+      { path: "Projects", element: <Projects /> },
       { path: "*", element: <NotFound /> }, // Catch-all for 404s
     ],
   },
