@@ -1,17 +1,18 @@
 import { useState } from "react";
 import ProjectCard from "./components/projectCard";
+import Card from "./components/Card";
 
 export default function Projects() {
   const [activeTab, setActiveTab] = useState("Computer Science");
 
   const projects = {
     "Computer Science": [
-      { imageSrc: "csProject1.png", title: "CS Project 1", description: "A computer science project", link: "https://example.com/cs1" },
+      { imageSrc: "Pixel_Logo.png", title: "Pixel Tees Store", description: "e-commerce website for selling tshirts. (payment system shut down)", link: "https://pixeltees.org", },    
       { imageSrc: "csProject2.png", title: "CS Project 2", description: "Another CS project", link: "https://example.com/cs2" },
     ],
     "In Progress": [
-      { imageSrc: "progressProject1.png", title: "In Progress 1", description: "A project currently in development", link: "https://example.com/progress1" },
-      { imageSrc: "progressProject2.png", title: "In Progress 2", description: "Another work in progress", link: "https://example.com/progress2" },
+      { imageSrc: "progressProject1.png", title: "In Progress 1", description: "A project currently in development" },
+      { imageSrc: "progressProject2.png", title: "In Progress 2", description: "Another work in progress" },
     ],
     "Personal": [
       { imageSrc: "personalProject1.png", title: "Personal Project 1", description: "A personal passion project", link: "https://example.com/personal1" },
@@ -54,7 +55,11 @@ export default function Projects() {
           {/* Cards Grid - Limited to 3 Cards Per Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
             {projects[activeTab].map((project, index) => (
-              <ProjectCard key={index} imageSrc={project.imageSrc} title={project.title} description={project.description} link={project.link} />
+              activeTab === "In Progress" ? (
+                <Card key={index} imageSrc={project.imageSrc} title={project.title} description={project.description} />
+              ) : (
+                <ProjectCard key={index} imageSrc={project.imageSrc} title={project.title} description={project.description} link={project.link} />
+              )
             ))}
           </div>
         </div>
