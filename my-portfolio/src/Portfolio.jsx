@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import Card from "./components/Card";
 
 export default function Portfolio() {
@@ -23,21 +24,43 @@ export default function Portfolio() {
   };
 
   return (
-    <div className="min-h-screen bg-background rounded-lg p-8">
+    <motion.div 
+      className="min-h-screen bg-background rounded-lg p-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8 }}
+    >
       <div className="max-w-screen-2xl mx-auto p-4 relative">
         {/* Portfolio Title */}
-        <h1 className="text-4xl font-bold text-text text-center mb-8">Portfolio</h1>
+        <motion.h1 
+          className="text-4xl font-bold text-text text-center mb-8"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          Portfolio
+        </motion.h1>
 
         {/* Intro Paragraph */}
-        <p className="text-text text-lg mb-6 text-center">
+        <motion.p 
+          className="text-text text-lg mb-6 text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+        >
           Welcome to my art portfolio! Here you’ll find a collection of my creative work, including pixel art, digital illustrations, and photography. 
           Explore the different categories using the tabs below.
-        </p>
+        </motion.p>
 
         {/* Tabs Bar - Chrome-Style */}
-        <div className="relative w-full flex border-4 border-contrast border-b-0 rounded-t-lg bg-contrast">
+        <motion.div 
+          className="relative w-full flex border-4 border-contrast border-b-0 rounded-t-lg bg-contrast"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        >
           {Object.keys(artworks).map((tab) => (
-            <button
+            <motion.button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-6 py-3 font-semibold transition relative rounded-t-lg 
@@ -47,22 +70,36 @@ export default function Portfolio() {
                     ? "bg-background text-text before:bg-secondary border-b-0 rounded-b-none" 
                     : "bg-contrast text-white before:bg-transparent"
                 }`}
+              whileHover={{ scale: 1.05 }}
             >
               {tab}
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
 
         {/* Content Section with Border */}
-        <div className="border-4 border-contrast border-t-0 rounded-b-lg p-4 bg-background">
+        <motion.div 
+          className="border-4 border-contrast border-t-0 rounded-b-lg p-4 bg-background"
+          key={activeTab}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
           {/* Cards Grid - Limited to 3 Cards Per Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             {artworks[activeTab].map((art, index) => (
-              <Card key={index} imageSrc={art.imageSrc} title={art.title} description={art.description} />
+              <motion.div key={index} whileHover={{ scale: 1.05 }}>
+                <Card imageSrc={art.imageSrc} title={art.title} description={art.description} />
+              </motion.div>
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

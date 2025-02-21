@@ -21,12 +21,7 @@ export default function Navbar() {
           >
             Home
           </Link>
-          <Link 
-            to="/about" 
-            className="px-4 py-2 rounded-lg hover:bg-darkback hover:text-white hover:shadow-lg hover:rounded-lg transition-all"
-          >
-            About
-          </Link>
+          
           <Link 
             to="/resume" 
             className="px-4 py-2 rounded-lg hover:bg-darkback hover:text-white hover:shadow-lg hover:rounded-lg transition-all"

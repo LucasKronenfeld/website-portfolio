@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 const sections = [
   "Full Resume", "Summary", "Work Experience", "Projects", "Skills", "Education", "Relevant Coursework", "Volunteer Work"
@@ -70,13 +71,24 @@ export default function Resume() {
         </ul>
       </div>
 
-      <div className={`w-3/4 p-6 bg-white rounded-lg shadow-lg ml-4 overflow-y-auto max-h-screen ${activeSection === "Full Resume" ? "text-black" : ""}`}>
+      <motion.div
+        className={`w-3/4 p-6 bg-white rounded-lg shadow-lg ml-4 overflow-y-auto max-h-screen ${activeSection === "Full Resume" ? "text-black" : ""}`}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <h1 className="text-3xl font-bold text-text mb-4">{activeSection}</h1>
 
-         {activeSection === "Full Resume" ? (
+        {activeSection === "Full Resume" ? (
           <div className="overflow-y-auto max-h-screen p-4">
             {sections.slice(1).map(section => (
-              <div key={section} className="mb-6">
+              <motion.div
+                key={section}
+                className="mb-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
                 <h2 className="text-xl font-bold mb-2">{section}</h2>
                 {section === "Skills" || section === "Relevant Coursework" ? (
                   Object.entries(resumeData[section]).map(([category, items], index) => (
@@ -104,13 +116,19 @@ export default function Resume() {
                 ) : (
                   <p className="whitespace-pre-wrap text-lg">{resumeData[section]}</p>
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
         ) : activeSection === "Projects" ? (
           <div className="space-y-6">
             {resumeData["Projects"].map((project, index) => (
-              <div key={index} className="p-4 bg-gray-100 rounded-lg shadow-md hover:bg-secondary">
+              <motion.div
+                key={index}
+                className="p-4 bg-gray-100 rounded-lg shadow-md hover:bg-secondary"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
                 <h2 className="text-xl font-bold text-text">{project.title}</h2>
                 <p className="text-gray-700 mt-1">{project.description}</p>
                 {project.link && (
@@ -123,39 +141,62 @@ export default function Resume() {
                     View Project
                   </a>
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
-          ): activeSection === "Summary" ? (
-            <div className="p-6 bg-gray-100 rounded-lg shadow-md hover:bg-secondary">
-              <p className="text-lg text-gray-700">{resumeData["Summary"]}</p>
-            </div>
-          ) :activeSection === "Work Experience" || activeSection === "Volunteer Work" ? (
-            <div className="space-y-6">
-              {resumeData[activeSection].map((job, index) => (
-                <div key={index} className="p-4 bg-gray-100 rounded-lg shadow-md hover:bg-secondary">
-                  <h2 className="text-xl font-bold text-text">{job.title}</h2>
-                  <p className="text-gray-600 text-sm">{job.role} ({job.duration})</p>
-                  <p className="text-gray-700 mt-2">{job.description}</p>
-                </div>
-              ))}
-            </div>
-          ) :activeSection === "Education" ? (
+        ) : activeSection === "Summary" ? (
+          <motion.div
+            className="p-6 bg-gray-100 rounded-lg shadow-md hover:bg-secondary"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <p className="text-lg text-gray-700">{resumeData["Summary"]}</p>
+          </motion.div>
+        ) : activeSection === "Work Experience" || activeSection === "Volunteer Work" ? (
+          <div className="space-y-6">
+            {resumeData[activeSection].map((job, index) => (
+              <motion.div
+                key={index}
+                className="p-4 bg-gray-100 rounded-lg shadow-md hover:bg-secondary"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <h2 className="text-xl font-bold text-text">{job.title}</h2>
+                <p className="text-gray-600 text-sm">{job.role} ({job.duration})</p>
+                <p className="text-gray-700 mt-2">{job.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        ) : activeSection === "Education" ? (
           <div className="space-y-6">
             {resumeData["Education"].map((education, index) => {
               const [school, details] = education.split(" (");
               return (
-                <div key={index} className="p-4 bg-gray-100 rounded-lg shadow-md hover:bg-secondary text-black">
+                <motion.div
+                  key={index}
+                  className="p-4 bg-gray-100 rounded-lg shadow-md hover:bg-secondary text-black"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
                   <h2 className="text-xl font-bold text-text">{school}</h2>
                   <p className="text-gray-700 mt-1">({details}</p>
-                </div>
+                </motion.div>
               );
             })}
           </div>
-          ): activeSection === "Skills" || activeSection === "Relevant Coursework" ? (
+        ) : activeSection === "Skills" || activeSection === "Relevant Coursework" ? (
           <div>
             {Object.entries(resumeData[activeSection]).map(([category, items], index) => (
-              <div key={index} className="mb-4">
+              <motion.div
+                key={index}
+                className="mb-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
                 <h2 className="text-xl font-semibold mb-2">{category}</h2>
                 <div className="flex flex-wrap gap-2">
                   {items.map((item, itemIndex) => (
@@ -164,13 +205,19 @@ export default function Resume() {
                     </span>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         ) : Array.isArray(resumeData[activeSection]) ? (
           <ul>
             {resumeData[activeSection].map((item, index) => (
-              <li key={index} className="mb-4">
+              <motion.li
+                key={index}
+                className="mb-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
                 {typeof item === "string" ? (
                   <p className="text-lg">{item}</p>
                 ) : (
@@ -180,14 +227,20 @@ export default function Resume() {
                     <p className="mt-2">{item.description}</p>
                   </>
                 )}
-              </li>
+              </motion.li>
             ))}
           </ul>
         ) : (
-          <p className="whitespace-pre-wrap text-lg">{resumeData[activeSection]}</p>
+          <motion.p
+            className="whitespace-pre-wrap text-lg"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            {resumeData[activeSection]}
+          </motion.p>
         )}
-  
-      </div>
+      </motion.div>
     </div>
   );
 }

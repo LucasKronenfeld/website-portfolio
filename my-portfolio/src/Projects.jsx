@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import ProjectCard from "./components/projectCard";
 import Card from "./components/Card";
 
@@ -21,20 +22,42 @@ export default function Projects() {
   };
 
   return (
-    <div className="min-h-screen bg-background rounded-lg p-8">
+    <motion.div 
+      className="min-h-screen bg-background rounded-lg p-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8 }}
+    >
       <div className="max-w-screen-2xl mx-auto p-4 relative">
         {/* Projects Title */}
-        <h1 className="text-4xl font-bold text-text text-center mb-8">Projects</h1>
+        <motion.h1 
+          className="text-4xl font-bold text-text text-center mb-8"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          Projects
+        </motion.h1>
 
         {/* Intro Paragraph */}
-        <p className="text-text text-lg mb-6 text-center">
+        <motion.p 
+          className="text-text text-lg mb-6 text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+        >
           Explore my projects, including computer science work, ongoing developments, and personal creations. Click "Inspect" to view more details.
-        </p>
+        </motion.p>
 
         {/* Tabs Bar - Chrome-Style */}
-        <div className="relative w-full flex border-4 border-contrast border-b-0 rounded-t-lg bg-contrast">
+        <motion.div 
+          className="relative w-full flex border-4 border-contrast border-b-0 rounded-t-lg bg-contrast"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        >
           {Object.keys(projects).map((tab) => (
-            <button
+            <motion.button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-6 py-3 font-semibold transition relative rounded-t-lg 
@@ -44,26 +67,40 @@ export default function Projects() {
                     ? "bg-background text-text before:bg-secondary border-b-0 rounded-b-none" 
                     : "bg-contrast text-white before:bg-transparent"
                 }`}
+              whileHover={{ scale: 1.05 }}
             >
               {tab}
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
 
         {/* Content Section with Border */}
-        <div className="border-4 border-contrast border-t-0 rounded-b-lg p-4 bg-background">
+        <motion.div 
+          className="border-4 border-contrast border-t-0 rounded-b-lg p-4 bg-background"
+          key={activeTab}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
           {/* Cards Grid - Limited to 3 Cards Per Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             {projects[activeTab].map((project, index) => (
-              activeTab === "In Progress" ? (
-                <Card key={index} imageSrc={project.imageSrc} title={project.title} description={project.description} />
-              ) : (
-                <ProjectCard key={index} imageSrc={project.imageSrc} title={project.title} description={project.description} link={project.link} />
-              )
+              <motion.div key={index} whileHover={{ scale: 1.05 }}>
+                {activeTab === "In Progress" ? (
+                  <Card imageSrc={project.imageSrc} title={project.title} description={project.description} />
+                ) : (
+                  <ProjectCard imageSrc={project.imageSrc} title={project.title} description={project.description} link={project.link} />
+                )}
+              </motion.div>
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }
