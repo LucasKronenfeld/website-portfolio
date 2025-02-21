@@ -10,7 +10,10 @@ const resumeData = {
   "Work Experience": [
     { title: "Ohio State Athletics Dept.", role: "IT Helpdesk Technical Support Specialist", duration: "September 2023 - Present", description: "Troubleshoot and resolve software and hardware issues for professional coaches. Manage technology for live broadcasts during football and basketball games, ensuring seamless operations. Gained hands-on experience with CrowdStrike and various Microsoft products at a commercial level." },
     { title: "Solon Recreation Camp", role: "Camp Director", duration: "June 2024 - August 2024", description: "Directed a team of 70 counselors, managed activities for 450 campers. Implemented discipline strategies to reduce camper incidents." },
-    { title: "Home Depot", role: "Sales Associate", duration: "May 2022 - June 2024", description: "Achieved sales targets, contributing to a revenue increase. Enhanced customer experience through expert product knowledge." }
+    { title: "Home Depot", role: "Sales Associate", duration: "May 2022 - June 2024", description: "Achieved sales targets, contributing to a revenue increase. Enhanced customer experience through expert product knowledge." },
+    { title: "Birdigo and Elle Restaurant", role: "Food Service Associate", duration: "August 2021 - August 2022", description: "Managed point-of-sale systems and improved customer satisfaction scores through effective issue resolution." },
+    { title: "Everything Lacrosse", role: "Founder and Manager", duration: "June 2021 - August 2021", description: "Launched and managed a successful lacrosse camp with a 100% satisfaction rate. Recruited and trained a team of coaches." },
+    { title: "Backyard Camp", role: "Founder and Manager", duration: "June 2020 - August 2020", description: "Successfully launched a summer camp during COVID-19 with over 20 signups. Managed 5 counselors, created a safe and engaging environment." },
   ],
 
   "Projects": [
@@ -50,7 +53,7 @@ export default function Resume() {
   const [activeSection, setActiveSection] = useState("Full Resume");
 
   return (
-    <div className="min-h-screen bg-background p-8 flex">
+    <div className="min-h-screen bg-background rounded-lg p-8 flex">
       <div className="w-1/4 bg-contrast p-4 rounded-lg shadow-lg">
         <h2 className="text-xl font-bold text-white mb-4">Sections</h2>
         <ul>
@@ -70,7 +73,7 @@ export default function Resume() {
       <div className={`w-3/4 p-6 bg-white rounded-lg shadow-lg ml-4 overflow-y-auto max-h-screen ${activeSection === "Full Resume" ? "text-black" : ""}`}>
         <h1 className="text-3xl font-bold text-text mb-4">{activeSection}</h1>
 
-        {activeSection === "Full Resume" ? (
+         {activeSection === "Full Resume" ? (
           <div className="overflow-y-auto max-h-screen p-4">
             {sections.slice(1).map(section => (
               <div key={section} className="mb-6">
@@ -104,14 +107,59 @@ export default function Resume() {
               </div>
             ))}
           </div>
-        ) : activeSection === "Skills" || activeSection === "Relevant Coursework" ? (
+        ) : activeSection === "Projects" ? (
+          <div className="space-y-6">
+            {resumeData["Projects"].map((project, index) => (
+              <div key={index} className="p-4 bg-gray-100 rounded-lg shadow-md hover:bg-secondary">
+                <h2 className="text-xl font-bold text-text">{project.title}</h2>
+                <p className="text-gray-700 mt-1">{project.description}</p>
+                {project.link && (
+                  <a
+                    href={project.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline mt-2 block"
+                  >
+                    View Project
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+          ): activeSection === "Summary" ? (
+            <div className="p-6 bg-gray-100 rounded-lg shadow-md hover:bg-secondary">
+              <p className="text-lg text-gray-700">{resumeData["Summary"]}</p>
+            </div>
+          ) :activeSection === "Work Experience" || activeSection === "Volunteer Work" ? (
+            <div className="space-y-6">
+              {resumeData[activeSection].map((job, index) => (
+                <div key={index} className="p-4 bg-gray-100 rounded-lg shadow-md hover:bg-secondary">
+                  <h2 className="text-xl font-bold text-text">{job.title}</h2>
+                  <p className="text-gray-600 text-sm">{job.role} ({job.duration})</p>
+                  <p className="text-gray-700 mt-2">{job.description}</p>
+                </div>
+              ))}
+            </div>
+          ) :activeSection === "Education" ? (
+          <div className="space-y-6">
+            {resumeData["Education"].map((education, index) => {
+              const [school, details] = education.split(" (");
+              return (
+                <div key={index} className="p-4 bg-gray-100 rounded-lg shadow-md hover:bg-secondary text-black">
+                  <h2 className="text-xl font-bold text-text">{school}</h2>
+                  <p className="text-gray-700 mt-1">({details}</p>
+                </div>
+              );
+            })}
+          </div>
+          ): activeSection === "Skills" || activeSection === "Relevant Coursework" ? (
           <div>
             {Object.entries(resumeData[activeSection]).map(([category, items], index) => (
               <div key={index} className="mb-4">
                 <h2 className="text-xl font-semibold mb-2">{category}</h2>
                 <div className="flex flex-wrap gap-2">
                   {items.map((item, itemIndex) => (
-                    <span key={itemIndex} className="px-4 py-2 bg-gray-200 rounded-lg shadow-md transition duration-200 hover:bg-secondary text-black">
+                    <span key={itemIndex} className="px-4 py-2 bg-gray-100 rounded-lg shadow-md transition duration-200 hover:bg-secondary text-black">
                       {item}
                     </span>
                   ))}
@@ -138,6 +186,7 @@ export default function Resume() {
         ) : (
           <p className="whitespace-pre-wrap text-lg">{resumeData[activeSection]}</p>
         )}
+  
       </div>
     </div>
   );
