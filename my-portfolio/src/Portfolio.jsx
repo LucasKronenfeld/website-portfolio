@@ -81,9 +81,9 @@ export default function Portfolio() {
         <motion.div 
           className="border-4 border-contrast border-t-0 rounded-b-lg p-4 bg-background"
           key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          initial={{ x: -50, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.6 }}
         >
           {/* Cards Grid - Limited to 3 Cards Per Row */}
           <motion.div 

@@ -70,7 +70,7 @@ const Home = () => {
           </motion.p>
         </motion.div>
         <motion.img
-          src="/deskWorks.svg"
+          src="/computerScreen.svg"
           alt="Innovative SVG"
           className="w-32 h-32 md:w-48 md:h-48"
           initial={{ opacity: 0, scale: 0.8 }}
