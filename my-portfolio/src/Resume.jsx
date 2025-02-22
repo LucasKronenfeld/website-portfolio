@@ -23,8 +23,9 @@ const resumeData = {
   ],
 
   "Skills": {
-    "Programming Languages": ["Assembly", "Python", "C", "C++", "Java", "JavaScript", "HTML", "CSS", "MATLAB"],
-    "Web Development": ["HTML", "JavaScript", "CSS", "Web App Development"],
+    "Programming Languages": ["Assembly", "Python", "C", "C++", "Java", "JavaScript", "HTML", "CSS", "MATLAB", "Swift"],
+    "Web Development": ["HTML", "JavaScript", "CSS", "Web App Development", "React", "Vite", "Tailwind CSS"],
+    "Software": ["XCode", "Microsoft Office Suite", "Eclipse", "Visual Studio Code"],
     "Databases": ["SQL", "Database Design"],
     "Creative": ["2D Art", "Digital Design"],
     "Testing & Tools": ["J-Unit Testing", "MATLAB", "CrowdStrike", "Microsoft Office Suite"],
@@ -37,14 +38,16 @@ const resumeData = {
   ],
 
   "Relevant Coursework": {
-    "Software Engineering": ["Software I", "Software II", "Web App Development", "Discrete Math"],
+    "Software Engineering": ["Software I", "Software II", "Web App Development", "Discrete Math", "Principal of Programming Languages", "Intro to AI"],
     "Architecture": ["Systems I", "Systems II", "Analog Systems and Circuit Design", "Digital Logic"],
     "Networking & Databases": ["Computer Networking", "Database Systems"],
-    "Engineering": ["Fundamental Engineering (Honors)", "Statistics", "Calculus"],
-    "Creative Design": ["2D Design"]
+    "Engineering": ["Fundamental Engineering (Honors)", "Statistics", "Calculus", "Software Engineering", "Computer Engineering Ethics"],
+    "Communication and Buissness": ["Entrepreneurship", "Communication technology", "Persuasive Communication", "Violence in Media", "Media and Citizenship", "Introduction to Humanities"],
+    "Creative Design": ["2D Design"],
   },
 
   "Volunteer Work": [
+    { title: "Solon Laccrose", role: "Head/Assistant Coach", duration: "2021 - 2024", description: "Volunteered to help coach a few teams in my free time" },
     { title: "Solon Recreation Center", role: "Head Coach", duration: "2018 - 2022", description: "Led teams to several league championships." },
     { title: "Solon High School", role: "Peer Tutor", duration: "2021 - 2022", description: "Tutored peers, improving grades by an average of 10%." }
   ]
