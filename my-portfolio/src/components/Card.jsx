@@ -7,9 +7,9 @@ const Card = ({ imageSrc, title, description }) => {
 
   return (
     <>
-      <div className="bg-background rounded-2xl shadow-lg overflow-visible flex flex-col h-full">
-        {/* Image */}
-        <img src={imageSrc} alt={title} className="w-full h-48 object-cover" />
+      <div className="bg-background rounded-2xl shadow-lg overflow-hidden flex flex-col h-full">
+        {/* Image with Rounded Corners */}
+        <img src={imageSrc} alt={title} className="w-full h-48 object-cover rounded-t-2xl" />
 
         {/* Content */}
         <div className="p-4 flex-grow overflow-visible">
@@ -52,8 +52,8 @@ const Card = ({ imageSrc, title, description }) => {
                   ✕
                 </button>
 
-                {/* Modal Image */}
-                <img src={imageSrc} alt={title} className="max-w-full max-h-[80vh]" />
+                {/* Modal Image with Rounded Corners */}
+                <img src={imageSrc} alt={title} className="max-w-full max-h-[80vh] rounded-lg" />
               </motion.div>
             </motion.div>
           )}

@@ -7,15 +7,28 @@ export default function Portfolio() {
 
   const artworks = {
     Pixel: [
-      { imageSrc: "modernDeskWork.png", title: "Pixel Art 1", description: "A pixel piece" },
-      { imageSrc: "modernDeskWork.png", title: "Pixel Art 2", description: "Another pixel piece that is truly wonderful" },
-      { imageSrc: "modernDeskWork.png", title: "Pixel Art 3", description: "Another pixel piece" },
-      { imageSrc: "modernDeskWork.png", title: "Pixel Art 4", description: "Another pixel piece" },
-      { imageSrc: "modernDeskWork.png", title: "Pixel Art 5", description: "Another pixel piece" },
+      { imageSrc: "/pixel/pixelPenguin.png", title: "Pixel Art 1", description: "A pixel piece" },
+      { imageSrc: "/pixel/pixilPanda.png", title: "Pixel Art 1", description: "A pixel piece" },
+      { imageSrc: "/pixel/pixilOrchid.png", title: "Pixel Art 1", description: "A pixel piece" },
+      { imageSrc: "/pixel/pixelBus.png", title: "Pixel Art 1", description: "A pixel piece" },
+      { imageSrc: "/pixel/pixelCLE.png", title: "Pixel Art 1", description: "A pixel piece" },
+      { imageSrc: "/pixel/pixelCamp.png", title: "Pixel Art 1", description: "A pixel piece" },
+      { imageSrc: "/pixel/pixilBall.png", title: "Pixel Art 1", description: "A pixel piece" },
+      { imageSrc: "/pixel/pixilPot.png", title: "Pixel Art 1", description: "A pixel piece" },
+      { imageSrc: "/pixel/pixilWave.png", title: "Pixel Art 1", description: "A pixel piece" },
+      
     ],
     "2D": [
-      { imageSrc: "modernDeskWork.png", title: "2D Art 1", description: "A 2D artwork" },
-      { imageSrc: "modernDeskWork.png", title: "2D Art 2", description: "Another 2D artwork" },
+      { imageSrc: "/TwoDArt/chase.jpg", title: "Lucas and Charles", description: "Another 2D artwork" },
+      { imageSrc: "/TwoDArt/lucasLogoman.png", title: "Logoman", description: "Another 2D artwork" },
+      { imageSrc: "/TwoDArt/abstractArt1.jpg", title: "Abstract Art", description: "Another 2D artwork" },
+      { imageSrc: "/TwoDArt/jakob.jpg", title: "Jakob", description: "Another 2D artwork" },
+      { imageSrc: "/TwoDArt/plew.JPG", title: "Zion", description: "Another 2D artwork" },
+      { imageSrc: "/TwoDArt/Edward.jpg", title: "Edward", description: "A 2D artwork" },
+      { imageSrc: "/TwoDArt/Jamari.jpg", title: "Jamari", description: "Another 2D artwork" },
+      { imageSrc: "/TwoDArt/Salvatore.jpg", title: "Salvatore", description: "Another 2D artwork" },
+      { imageSrc: "/TwoDArt/leko.jpg", title: "Leko", description: "Another 2D artwork" },
+      { imageSrc: "/TwoDArt/LekoGray.jpg", title: "Leko Portait", description: "Another 2D artwork" },
     ],
     Photography: [
       { imageSrc: "modernDeskWork.png", title: "Photo 1", description: "A beautiful shot" },
