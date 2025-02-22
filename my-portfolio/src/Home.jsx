@@ -1,28 +1,30 @@
 import { motion } from "framer-motion";
-//import "./styles.css"; // Ensure to style SVGs & add hover effects here
 
 const Home = () => {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-text px-6">
-      {/* Top Left Section */}
-      <div className="flex items-center w-full max-w-4xl mb-16">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-text px-6 py-12">
+      {/* Top Section (Mobile: Column, Desktop: Row) */}
+      <div className="flex flex-col md:flex-row items-center w-full max-w-4xl mb-16 gap-6">
+        {/* SVG Image */}
         <motion.img
           src="/deskWorks.svg"
           alt="Creative SVG"
-          className="w-32 h-32 md:w-48 md:h-48"
+          className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1 }}
           whileHover={{ scale: 1.1, filter: "drop-shadow(0px 0px 15px #BF996B)" }}
         />
+
+        {/* Text Section */}
         <motion.div
-          className="ml-8"
+          className="text-center md:text-left md:ml-8"
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 1 }}
         >
           <motion.h1
-            className="text-3xl font-bold"
+            className="text-2xl sm:text-3xl font-bold"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}
@@ -30,7 +32,7 @@ const Home = () => {
             Welcome to My Digital Space
           </motion.h1>
           <motion.p
-            className="mt-2 text-lg"
+            className="mt-2 text-base sm:text-lg leading-relaxed"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.6 }}
@@ -42,16 +44,17 @@ const Home = () => {
         </motion.div>
       </div>
 
-      {/* Bottom Right Section */}
-      <div className="flex items-center w-full max-w-4xl">
+      {/* Bottom Section (Mobile: Column, Desktop: Row) */}
+      <div className="flex flex-col-reverse md:flex-row items-center w-full max-w-4xl gap-6">
+        {/* Text Section */}
         <motion.div
-          className="mr-8 text-right"
+          className="text-center md:text-right md:mr-8"
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 1 }}
         >
           <motion.h1
-            className="text-3xl font-bold"
+            className="text-2xl sm:text-3xl font-bold"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}
@@ -59,7 +62,7 @@ const Home = () => {
             Designed for Innovation
           </motion.h1>
           <motion.p
-            className="mt-2 text-lg"
+            className="mt-2 text-base sm:text-lg leading-relaxed"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.6 }}
@@ -69,10 +72,12 @@ const Home = () => {
             aesthetics, and interactivity. Take a look around!"
           </motion.p>
         </motion.div>
+
+        {/* SVG Image */}
         <motion.img
           src="/computerScreen.svg"
           alt="Innovative SVG"
-          className="w-32 h-32 md:w-48 md:h-48"
+          className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1 }}

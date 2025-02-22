@@ -1,4 +1,4 @@
 export default function About() {
-    return <h1 className="text-2xl">About</h1>;
+    return <h1 className="text-2xl">Welcome to the hidden page</h1>;
   }
   
