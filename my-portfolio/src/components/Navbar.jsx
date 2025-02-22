@@ -44,17 +44,17 @@ export default function Navbar() {
       {/* Mobile Menu (Only visible when open) */}
       {isOpen && (
         <div className="md:hidden flex flex-col space-y-4 mt-4 bg-contrast text-text p-4 rounded-lg absolute top-16 left-0 w-full z-50 shadow-lg">
-          <Link to="/" className="block px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Home</Link>
-          <Link to="/resume" className="block px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Resume</Link>
-          <Link to="/portfolio" className="block px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Portfolio</Link>
-          <Link to="/projects" className="block px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Projects</Link>
+          <Link to="/" onClick={() => setIsOpen(false)} className="block px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Home</Link>
+          <Link to="/resume" onClick={() => setIsOpen(false)} className="block px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Resume</Link>
+          <Link to="/portfolio" onClick={() => setIsOpen(false)} className="block px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Portfolio</Link>
+          <Link to="/projects" onClick={() => setIsOpen(false)} className="block px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Projects</Link>
 
           {/* Social Icons in Mobile Menu */}
           <div className="flex justify-center space-x-6 pt-4">
-            <a href="mailto:kronenfeldlucas@gmail.com" className="hover:text-white"><EnvelopeIcon className="w-6 h-6" /></a>
-            <a href="https://www.linkedin.com/in/lucas-kronenfeld-872040269/" target="_blank" className="hover:text-white"><UserIcon className="w-6 h-6" /></a>
-            <a href="https://github.com/LucasKronenfeld" target="_blank" className="hover:text-white"><CodeBracketIcon className="w-6 h-6" /></a>
-            <a href="/AdobeColor-FlamingosLife.jpeg" target="_blank" className="hover:text-white"><SwatchIcon className="w-6 h-6" /></a>
+            <a href="mailto:kronenfeldlucas@gmail.com" onClick={() => setIsOpen(false)} className="hover:text-white"><EnvelopeIcon className="w-6 h-6" /></a>
+            <a href="https://www.linkedin.com/in/lucas-kronenfeld-872040269/" target="_blank" onClick={() => setIsOpen(false)} className="hover:text-white"><UserIcon className="w-6 h-6" /></a>
+            <a href="https://github.com/LucasKronenfeld" target="_blank" onClick={() => setIsOpen(false)} className="hover:text-white"><CodeBracketIcon className="w-6 h-6" /></a>
+            <a href="/AdobeColor-FlamingosLife.jpeg" target="_blank" onClick={() => setIsOpen(false)} className="hover:text-white"><SwatchIcon className="w-6 h-6" /></a>
           </div>
         </div>
       )}
