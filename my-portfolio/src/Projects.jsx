@@ -9,7 +9,7 @@ export default function Projects() {
   const projects = {
     "Computer Science": [
       { imageSrc: "Pixel_Logo.png", title: "Pixel Tees Store", description: "e-commerce website for selling tshirts. (payment system shut down)", link: "https://pixeltees.org", },    
-      { imageSrc: "csProject2.png", title: "CS Project 2", description: "Another CS project", link: "https://example.com/cs2" },
+      { imageSrc: "modernDeskWork.png", title: "LucasKronenfeld.com", description: "design a website to highlight projects and skills", link: "https://lucaskronenfeld.com" },
     ],
     "In Progress": [
       { imageSrc: "progressProject1.png", title: "In Progress 1", description: "A project currently in development" },
