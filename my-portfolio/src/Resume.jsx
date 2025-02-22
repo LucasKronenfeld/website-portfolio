@@ -18,8 +18,10 @@ const resumeData = {
   ],
 
   "Projects": [
+    { title: "Portfolio Website", description: "Personal portfolio showcasing skills and projects.", link: "https://github.com/LucasKronenfeld/website-portfolio" },
+    { title: "Dentist Database creation", description: "design database and queries for a dentist office", link: "https://github.com/LucasKronenfeld/SQL-Project" },
     { title: "Pixel Tees Store", description: "E-commerce website for selling t-shirts. (payment system shut down).", link: "https://pixeltees.org" },
-    { title: "Portfolio Website", description: "Personal portfolio showcasing skills and projects.", link: "https://lucaskronenfeld.com" }
+
   ],
 
   "Skills": {

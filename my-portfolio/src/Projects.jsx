@@ -10,6 +10,7 @@ export default function Projects() {
     "Computer Science": [
       { imageSrc: "Pixel_Logo.png", title: "Pixel Tees Store", description: "e-commerce website for selling tshirts. (payment system shut down)", link: "https://pixeltees.org", },    
       { imageSrc: "modernDeskWork.png", title: "LucasKronenfeld.com", description: "design a website to highlight projects and skills", link: "https://lucaskronenfeld.com" },
+      { imageSrc: "Designer.jpeg", title: "Dentist Database creation", description: "design database and queries for a dentist office", link: "https://github.com/LucasKronenfeld/SQL-Project" },
     ],
     "In Progress": [
       { imageSrc: "progressProject1.png", title: "In Progress 1", description: "A project currently in development" },
