@@ -1,3 +1,4 @@
+// src/router.jsx
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "./App";
 import Home from "./Home";
@@ -8,19 +9,9 @@ import About from "./About";
 import Projects from "./Projects";
 import Blog from "./Blog"; // <-- 1. IMPORT THE NEW COMPONENT
 
-// --- Import the new Admin components ---
-import AdminLogin from "./AdminLogin";
-import AdminDashboard from "./AdminDashboard";
-
-// --- This component protects your admin dashboard ---
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('authToken');
-  // If there's no token, redirect to the /admin login page
-  return token ? children : <Navigate to="/admin" replace />;
-};
+// ... (Your ProtectedRoute and Admin imports are here) ...
 
 const router = createBrowserRouter([
-  // --- This is your existing public site layout ---
   {
     path: "/",
     element: <App />,
@@ -31,24 +22,11 @@ const router = createBrowserRouter([
       { path: "About", element: <About /> },
       { path: "Projects", element: <Projects /> },
       { path: "blog", element: <Blog /> }, // <-- 2. ADD THE NEW ROUTE
-
-      { path: "*", element: <NotFound /> }, // Catch-all for 404s
+      { path: "*", element: <NotFound /> },
     ],
   },
   
-  // --- Add the new Admin routes here ---
-  {
-    path: "/admin",
-    element: <AdminLogin />,
-  },
-  {
-    path: "/admin/dashboard",
-    element: (
-      <ProtectedRoute>
-        <AdminDashboard />
-      </ProtectedRoute>
-    ),
-  },
+  // ... (Your admin routes are here) ...
 ]);
 
 export default router;
