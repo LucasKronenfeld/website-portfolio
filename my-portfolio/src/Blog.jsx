@@ -1,32 +1,31 @@
-// src/router.jsx
-import { createBrowserRouter, Navigate } from "react-router-dom";
-import App from "./App";
-import Home from "./Home";
-import Resume from "./Resume";
-import Portfolio from "./Portfolio";
-import NotFound from "./NotFound";
-import About from "./About";
-import Projects from "./Projects";
-import Blog from "./Blog"; // <-- 1. IMPORT THE NEW COMPONENT
+// src/Blog.jsx
+import React from 'react';
+import { Link } from 'react-router-dom';
 
-// ... (Your ProtectedRoute and Admin imports are here) ...
+// This special Vite function finds and imports all your .mdx files
+const posts = import.meta.glob('../content/posts/*.mdx', { eager: true });
 
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <App />,
-    children: [
-      { index: true, element: <Home /> },
-      { path: "resume", element: <Resume /> },
-      { path: "portfolio", element: <Portfolio /> },
-      { path: "About", element: <About /> },
-      { path: "Projects", element: <Projects /> },
-      { path: "blog", element: <Blog /> }, // <-- 2. ADD THE NEW ROUTE
-      { path: "*", element: <NotFound /> },
-    ],
-  },
-  
-  // ... (Your admin routes are here) ...
-]);
+export default function Blog() {
+  return (
+    <div>
+      <h1 className="text-3xl font-bold mb-6">Blog Posts</h1>
+      <div className="space-y-6">
+        {Object.entries(posts).map(([path, post]) => {
+          // This gets the filename (e.g., 'first-post') to use in the URL
+          const slug = path.split('/').pop().replace('.mdx', '');
 
-export default router;
+          return (
+            <div key={slug}>
+              <Link to={`/blog/${slug}`} className="text-2xl font-semibold text-primary hover:underline">
+                {post.frontmatter.title}
+              </Link>
+              <p className="text-sm text-text-secondary mt-1">
+                Published on: {new Date(post.frontmatter.date).toLocaleDateString()}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
