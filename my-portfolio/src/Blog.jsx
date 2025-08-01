@@ -13,7 +13,7 @@ export default function Blog() {
         {Object.entries(posts).map(([path, post]) => {
           // This gets the filename (e.g., 'first-post') to use in the URL
           const slug = path.split('/').pop().replace('.mdx', '');
-
+          
           return (
             <div key={slug}>
               <Link to={`/blog/${slug}`} className="text-2xl font-semibold text-primary hover:underline">
@@ -22,7 +22,7 @@ export default function Blog() {
               <p className="text-sm text-text-secondary mt-1">
                 Published on: {new Date(post.frontmatter.date).toLocaleDateString()}
               </p>
-            </div> 
+            </div>
           );
         })}
       </div>
