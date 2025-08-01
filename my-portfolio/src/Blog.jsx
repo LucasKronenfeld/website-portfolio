@@ -22,7 +22,7 @@ export default function Blog() {
               <p className="text-sm text-text-secondary mt-1">
                 Published on: {new Date(post.frontmatter.date).toLocaleDateString()}
               </p>
-            </div>
+            </div> 
           );
         })}
       </div>
