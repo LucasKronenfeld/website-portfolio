@@ -1,4 +1,9 @@
 // my-portfolio/src/firebaseConfig.js
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+
+// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCLCDF6pZ7-1YEo1EejyofXT0si3Ek79-o",
   authDomain: "portfolio-project-d6d94.firebaseapp.com",
@@ -9,4 +14,9 @@ const firebaseConfig = {
   measurementId: "G-1ZXC3K7JEZ"
 };
 
-export default firebaseConfig;
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Initialize and export Firebase services
+export const db = getFirestore(app);
+export const auth = getAuth(app);

@@ -1,22 +1,25 @@
 // src/Blog.jsx
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
-
-// Initialize Firestore
-const db = getFirestore();
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from './firebaseConfig'; // Import the db instance
 
 export default function Blog() {
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
     const fetchPosts = async () => {
-      const querySnapshot = await getDocs(collection(db, 'posts'));
-      const postsData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setPosts(postsData);
+      try {
+        const querySnapshot = await getDocs(collection(db, 'posts'));
+        const postsData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setPosts(postsData);
+      } catch (error) {
+        console.error("Error fetching posts: ", error);
+        // Optionally, set an error state here to show in the UI
+      }
     };
 
     fetchPosts();
@@ -32,7 +35,7 @@ export default function Blog() {
               <Link to={`/blog/${post.id}`} className="text-2xl font-semibold text-primary hover:underline">
                 {post.title}
               </Link>
-              {post.createdAt && (
+              {post.createdAt && post.createdAt.toDate && (
                 <p className="text-sm text-text-secondary mt-1">
                   Published on: {new Date(post.createdAt.toDate()).toLocaleDateString()}
                 </p>

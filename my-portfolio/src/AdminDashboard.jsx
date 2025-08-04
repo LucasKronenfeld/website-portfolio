@@ -1,70 +1,76 @@
 // src/pages/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+import { db, auth } from '../firebaseConfig'; // Use centralized services
+import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 export default function AdminDashboard() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [message, setMessage] = useState('');
   const [posts, setPosts] = useState([]);
-  const [editing, setEditing] = useState(null); // {slug, title, content}
+  const [editing, setEditing] = useState(null); // Will hold the full post object being edited
+  const navigate = useNavigate();
 
-  const db = getFirestore();
+  // Effect for checking authentication state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in, fetch their posts.
+        fetchPosts();
+      } else {
+        // User is signed out, redirect to login.
+        navigate('/admin/login');
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [navigate]);
 
   const fetchPosts = async () => {
-    const querySnapshot = await getDocs(collection(db, 'posts'));
-    const postsData = querySnapshot.docs.map(doc => ({
-      id: doc.id, // Include the document ID
-      ...doc.data()
-    }));
-    setPosts(postsData);
+    try {
+      const querySnapshot = await getDocs(collection(db, 'posts'));
+      const postsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setPosts(postsData);
+    } catch (error) {
+      setMessage('Error fetching posts: ' + error.message);
+    }
   };
-
-  useEffect(() => {
-    fetchPosts();
-  }, []);
 
   const handleNewPost = async (e) => {
     e.preventDefault();
     setMessage('Submitting...');
-    const token = localStorage.getItem('authToken');
-
-    const response = await fetch('/api/admin/posts', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`, // <-- Important!
-      },
-      body: JSON.stringify({ title, content }),
-    });
-
-    const data = await response.json();
-    setMessage(data.message);
-
-    if (response.ok) {
+    try {
+      await addDoc(collection(db, 'posts'), {
+        title,
+        content,
+        createdAt: new Date(),
+      });
+      setMessage('Post created successfully!');
       setTitle('');
       setContent('');
-      fetchPosts();
+      fetchPosts(); // Refresh the posts list
+    } catch (error) {
+      setMessage('Error creating post: ' + error.message);
     }
   };
 
-  const startEdit = async (slug) => {
-    const res = await fetch(`/api/admin/posts?slug=${slug}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setEditing({ slug, title: slug, content: data.content });
-    }
+  const startEdit = (post) => {
+    setEditing(post);
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (!editing) return;
     setMessage('Updating...');
-
     try {
-      await updateDoc(doc(db, 'posts', editing.id), {
+      const postRef = doc(db, 'posts', editing.id);
+      await updateDoc(postRef, {
         title: editing.title,
         content: editing.content,
       });
@@ -77,9 +83,8 @@ export default function AdminDashboard() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this post?')) return;
+    if (!confirm('Are you sure you want to delete this post?')) return;
     setMessage('Deleting...');
-
     try {
       await deleteDoc(doc(db, 'posts', id));
       setMessage('Post deleted successfully!');
@@ -89,9 +94,26 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      // The onAuthStateChanged listener will handle the redirect
+    } catch (error) {
+      setMessage('Error logging out: ' + error.message);
+    }
+  };
+
   return (
     <div className="space-y-8">
-      <h2 className="text-2xl font-bold">Admin Dashboard</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Admin Dashboard</h2>
+        <button 
+          onClick={handleLogout} 
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+        >
+          Logout
+        </button>
+      </div>
 
       <form onSubmit={handleNewPost} className="space-y-4 bg-accent p-4 rounded shadow">
         <h3 className="text-xl font-semibold">Create New Post</h3>
@@ -104,7 +126,7 @@ export default function AdminDashboard() {
           className="w-full p-2 border border-contrast rounded"
         />
         <textarea
-          placeholder="Write your post content here (MDX)..."
+          placeholder="Write your post content here..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={8}
@@ -118,7 +140,7 @@ export default function AdminDashboard() {
 
       {editing && (
         <form onSubmit={handleUpdate} className="space-y-4 bg-accent p-4 rounded shadow">
-          <h3 className="text-xl font-semibold">Edit {editing.slug}</h3>
+          <h3 className="text-xl font-semibold">Edit "{editing.title}"</h3>
           <input
             type="text"
             value={editing.title}
@@ -149,17 +171,17 @@ export default function AdminDashboard() {
       <div className="space-y-2">
         <h3 className="text-xl font-semibold">Existing Posts</h3>
         {posts.map((p) => (
-          <div key={p.slug} className="flex justify-between items-center bg-contrast text-white p-2 rounded">
+          <div key={p.id} className="flex justify-between items-center bg-contrast text-white p-2 rounded">
             <span>{p.title}</span>
             <div className="space-x-2">
-              <button onClick={() => startEdit(p.slug)} className="px-2 py-1 bg-secondary text-white rounded">Edit</button>
+              <button onClick={() => startEdit(p)} className="px-2 py-1 bg-secondary text-white rounded">Edit</button>
               <button onClick={() => handleDelete(p.id)} className="px-2 py-1 bg-red-600 text-white rounded">Delete</button>
-              </div>
+            </div>
           </div>
         ))}
       </div>
 
-      {message && <p>{message}</p>}
+      {message && <p className="text-center p-2 bg-gray-200 rounded">{message}</p>}
     </div>
   );
 }
