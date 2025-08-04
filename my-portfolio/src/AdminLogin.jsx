@@ -1,6 +1,6 @@
 // src/AdminLogin.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './firebaseConfig'; // Import the auth instance
 
@@ -36,7 +36,9 @@ export default function AdminLogin() {
 
   return (
     <div className="max-w-md mx-auto mt-20 p-6 bg-accent text-text rounded-lg shadow">
-      <h2 className="text-2xl font-bold mb-4 text-center">Admin Login</h2>
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold">Admin Login</h2>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex flex-col">
           <label htmlFor="email" className="mb-1 font-semibold">Email</label>
@@ -70,6 +72,11 @@ export default function AdminLogin() {
           {isLoading ? 'Logging in...' : 'Login'}
         </button>
       </form>
+      <div className="text-center mt-6">
+        <Link to="/" className="text-sm text-primary hover:underline">
+          &larr; Back to Main Site
+        </Link>
+      </div>
     </div>
   );
 }

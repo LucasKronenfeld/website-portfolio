@@ -1,6 +1,6 @@
 // src/pages/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { db, auth } from './firebaseConfig'; // Corrected import path
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -118,6 +118,9 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
+        <Link to="/" className="text-sm text-primary hover:underline">
+          &larr; Back to Site
+        </Link>
         <h2 className="text-2xl font-bold">Admin Dashboard</h2>
         <button 
           onClick={handleLogout} 
