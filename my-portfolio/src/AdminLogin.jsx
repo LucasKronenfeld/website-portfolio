@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 
 export default function AdminLogin() {
   const [password, setPassword] = useState('');
@@ -9,6 +10,7 @@ export default function AdminLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate(); // 2. Initialize the navigate function
 
+  const auth = getAuth();
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -16,21 +18,11 @@ export default function AdminLogin() {
 
     try {
       const response = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+ // Removed existing fetch call
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed.');
-      }
-      
-      // On success, store the token
-      localStorage.setItem('authToken', data.token);
-      
-      // 3. Navigate to the dashboard
+      // Use Firebase Authentication
+      await signInWithEmailAndPassword(auth, 'admin@example.com', password); // Replace with the admin email
       navigate('/admin/dashboard'); 
       
     } catch (err) {

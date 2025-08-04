@@ -1,5 +1,6 @@
 // src/pages/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
 
 export default function AdminDashboard() {
   const [title, setTitle] = useState('');
@@ -8,16 +9,15 @@ export default function AdminDashboard() {
   const [posts, setPosts] = useState([]);
   const [editing, setEditing] = useState(null); // {slug, title, content}
 
-  const token = localStorage.getItem('authToken');
+  const db = getFirestore();
 
   const fetchPosts = async () => {
-    const res = await fetch('/api/admin/posts', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setPosts(data.posts || []);
-    }
+    const querySnapshot = await getDocs(collection(db, 'posts'));
+    const postsData = querySnapshot.docs.map(doc => ({
+      id: doc.id, // Include the document ID
+      ...doc.data()
+    }));
+    setPosts(postsData);
   };
 
   useEffect(() => {
@@ -62,32 +62,30 @@ export default function AdminDashboard() {
     e.preventDefault();
     if (!editing) return;
     setMessage('Updating...');
-    const res = await fetch('/api/admin/posts', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(editing),
-    });
-    const data = await res.json();
-    setMessage(data.message);
-    if (res.ok) {
+
+    try {
+      await updateDoc(doc(db, 'posts', editing.id), {
+        title: editing.title,
+        content: editing.content,
+      });
+      setMessage('Post updated successfully!');
       setEditing(null);
       fetchPosts();
+    } catch (error) {
+      setMessage('Error updating post: ' + error.message);
     }
   };
 
-  const handleDelete = async (slug) => {
+  const handleDelete = async (id) => {
     if (!confirm('Delete this post?')) return;
-    const res = await fetch(`/api/admin/posts?slug=${slug}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    setMessage(data.message);
-    if (res.ok) {
+    setMessage('Deleting...');
+
+    try {
+      await deleteDoc(doc(db, 'posts', id));
+      setMessage('Post deleted successfully!');
       fetchPosts();
+    } catch (error) {
+      setMessage('Error deleting post: ' + error.message);
     }
   };
 
@@ -155,8 +153,8 @@ export default function AdminDashboard() {
             <span>{p.title}</span>
             <div className="space-x-2">
               <button onClick={() => startEdit(p.slug)} className="px-2 py-1 bg-secondary text-white rounded">Edit</button>
-              <button onClick={() => handleDelete(p.slug)} className="px-2 py-1 bg-red-600 text-white rounded">Delete</button>
-            </div>
+              <button onClick={() => handleDelete(p.id)} className="px-2 py-1 bg-red-600 text-white rounded">Delete</button>
+              </div>
           </div>
         ))}
       </div>
