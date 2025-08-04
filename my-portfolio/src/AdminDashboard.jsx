@@ -1,7 +1,7 @@
 // src/pages/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, auth } from '../firebaseConfig'; // Use centralized services
+import { db, auth } from './firebaseConfig'; // Corrected import path
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
