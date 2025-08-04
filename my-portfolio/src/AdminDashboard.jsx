@@ -45,11 +45,18 @@ export default function AdminDashboard() {
   const handleNewPost = async (e) => {
     e.preventDefault();
     setMessage('Submitting...');
+    const user = auth.currentUser; // Get the currently signed-in user
+    if (!user) {
+      setMessage('You must be logged in to create a post.');
+      return;
+    }
+
     try {
       await addDoc(collection(db, 'posts'), {
         title,
         content,
         createdAt: new Date(),
+        authorId: user.uid, // Add the author's user ID
       });
       setMessage('Post created successfully!');
       setTitle('');
@@ -61,7 +68,12 @@ export default function AdminDashboard() {
   };
 
   const startEdit = (post) => {
-    setEditing(post);
+    // Security check: Only allow editing if the user is the author
+    if (auth.currentUser && auth.currentUser.uid === post.authorId) {
+      setEditing(post);
+    } else {
+      setMessage("You don't have permission to edit this post.");
+    }
   };
 
   const handleUpdate = async (e) => {
@@ -173,10 +185,12 @@ export default function AdminDashboard() {
         {posts.map((p) => (
           <div key={p.id} className="flex justify-between items-center bg-contrast text-white p-2 rounded">
             <span>{p.title}</span>
-            <div className="space-x-2">
-              <button onClick={() => startEdit(p)} className="px-2 py-1 bg-secondary text-white rounded">Edit</button>
-              <button onClick={() => handleDelete(p.id)} className="px-2 py-1 bg-red-600 text-white rounded">Delete</button>
-            </div>
+            {auth.currentUser && auth.currentUser.uid === p.authorId && (
+              <div className="space-x-2">
+                <button onClick={() => startEdit(p)} className="px-2 py-1 bg-secondary text-white rounded">Edit</button>
+                <button onClick={() => handleDelete(p.id)} className="px-2 py-1 bg-red-600 text-white rounded">Delete</button>
+              </div>
+            )}
           </div>
         ))}
       </div>
