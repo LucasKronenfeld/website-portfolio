@@ -4,7 +4,7 @@ import { RouterProvider } from "react-router-dom";
 import { initializeApp } from "firebase/app";
 import router from "./router";
 import "./index.css"; // Tailwind styles
-import { firebaseConfig } from "./firebaseConfig";
+import  firebaseConfig  from "./firebaseConfig";
 
 const app = initializeApp(firebaseConfig);
 
