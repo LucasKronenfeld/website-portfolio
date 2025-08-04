@@ -21,7 +21,7 @@ export default function AdminDashboard() {
         fetchPosts();
       } else {
         // User is signed out, redirect to login.
-        navigate('/admin/login');
+        navigate('/admin'); // Corrected redirect path
       }
     });
 

@@ -21,6 +21,7 @@ export default function Navbar() {
             <Link to="/resume" className="px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Resume</Link>
             <Link to="/portfolio" className="px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Portfolio</Link>
             <Link to="/projects" className="px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Projects</Link>
+            <Link to="/blog" className="px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Blog</Link>
           </div>
         </div>
 
@@ -48,6 +49,7 @@ export default function Navbar() {
           <Link to="/resume" onClick={() => setIsOpen(false)} className="block px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Resume</Link>
           <Link to="/portfolio" onClick={() => setIsOpen(false)} className="block px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Portfolio</Link>
           <Link to="/projects" onClick={() => setIsOpen(false)} className="block px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Projects</Link>
+          <Link to="/blog" onClick={() => setIsOpen(false)} className="block px-4 py-2 hover:bg-darkback hover:text-white rounded-lg transition-all">Blog</Link>
 
           {/* Social Icons in Mobile Menu */}
           <div className="flex justify-center space-x-6 pt-4">
