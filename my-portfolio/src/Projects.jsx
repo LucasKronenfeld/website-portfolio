@@ -33,6 +33,16 @@ export default function Projects() {
     fetchProjectsData();
   }, []);
 
+  const containerVariants = {
+    offscreen: { opacity: 0 },
+    onscreen: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+      }
+    }
+  };
+
   const categories = projectsData ? Object.keys(projectsData) : [];
   const activeProjects = activeTab && projectsData ? projectsData[activeTab] : [];
 
@@ -78,10 +88,9 @@ export default function Projects() {
           <motion.div
             key={activeTab}
             className="space-y-16"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -20, opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            variants={containerVariants}
+            initial="offscreen"
+            animate="onscreen"
           >
             {activeProjects && activeProjects.map((project, index) => (
               <FeatureRow key={`${activeTab}-${index}`} item={project} index={index} />
