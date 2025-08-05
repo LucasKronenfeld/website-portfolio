@@ -1,103 +1,111 @@
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useEffect, useState, useRef } from "react";
-import { Link } from "react-router-dom";
-import { db } from "./firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
-import ProjectCard from "./components/projectCard";
-import Card from "./components/Card";
+import { useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { useFirestoreData } from '../useFirestoreData';
+import Hero from '../components/Hero';
+import GridItem from '../components/GridItem';
 
-const AnimatedSection = ({ children }) => {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"]
-  });
-  const y = useTransform(scrollYProgress, [0, 1], [100, 0]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [0, 1]);
-  return <motion.div ref={ref} style={{ y, opacity }}>{children}</motion.div>;
+// Helper function to process and combine data
+const processFetchedData = (portfolioData, projectsData) => {
+  const combined = [];
+
+  // Add portfolio items
+  for (const category in portfolioData) {
+    portfolioData[category].forEach(item => {
+      combined.push({
+        id: `${category}-${item.title}`,
+        title: item.title,
+        image: item.imageUrl,
+        category: category,
+        link: `/portfolio`, // Or a more specific link if available
+      });
+    });
+  }
+
+  // Add project items
+  for (const category in projectsData) {
+    projectsData[category].forEach(item => {
+      combined.push({
+        id: `${category}-${item.title}`,
+        title: item.title,
+        image: item.imageSrc,
+        category: category,
+        link: item.link || `/projects`,
+      });
+    });
+  }
+
+  // Shuffle and select featured items
+  const shuffled = combined.sort(() => 0.5 - Math.random());
+  const featured = shuffled.slice(0, 5);
+
+  // Assign size property
+  return featured.map((item, index) => ({
+    ...item,
+    size: index === 0 ? 'large' : 'default',
+  }));
 };
 
-const Home = () => {
-  const [featuredProjects, setFeaturedProjects] = useState([]);
-  const [featuredPortfolio, setFeaturedPortfolio] = useState([]);
+export default function Home() {
+  const { data: portfolioData, loading: portfolioLoading } = useFirestoreData('portfolio');
+  const { data: projectsData, loading: projectsLoading } = useFirestoreData('projects');
 
-  useEffect(() => {
-    const fetchFeatured = async () => {
-      try {
-        const projectsSnap = await getDoc(doc(db, 'projects', 'data'));
-        if (projectsSnap.exists()) {
-          const featured = Object.values(projectsSnap.data()).flat().filter(p => p.isFeatured);
-          setFeaturedProjects(featured);
-        }
+  const featuredContent = useMemo(() => {
+    if (portfolioLoading || projectsLoading) return [];
+    return processFetchedData(portfolioData, projectsData);
+  }, [portfolioData, projectsData, portfolioLoading, projectsLoading]);
 
-        const portfolioSnap = await getDoc(doc(db, 'portfolio', 'data'));
-        if (portfolioSnap.exists()) {
-            const featured = Object.values(portfolioSnap.data()).flat().filter(p => p.isFeatured);
-            setFeaturedPortfolio(featured);
-        }
-      } catch (error) {
-        console.error("Error fetching featured content:", error);
-      }
-    };
-    fetchFeatured();
-  }, []);
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
+  if (portfolioLoading || projectsLoading) {
+    return (
+      <div className="bg-background text-text min-h-screen flex items-center justify-center">
+        <p className="text-2xl">Loading amazing things...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background text-text min-h-screen">
-      <div className="flex flex-col items-center justify-center text-center py-24 px-6 bg-accent rounded-b-3xl shadow-lg">
-        <motion.h1 className="text-4xl md:text-5xl font-bold mb-4" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-          Lucas Kronenfeld
-        </motion.h1>
-        <motion.p className="text-lg md:text-xl max-w-2xl" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.3 }}>
-          A passionate Computer Engineering student, creative problem-solver, and developer.
-        </motion.p>
-      </div>
-
-      <div className="container mx-auto px-6 py-16 space-y-24">
-        <AnimatedSection>
-          <h2 className="text-3xl font-bold text-center mb-10">Featured Projects</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProjects.map((project, index) => (
-              <motion.div key={`proj-${index}`} whileHover={{ scale: 1.05 }}>
-                 <ProjectCard {...project} />
-              </motion.div>
-            ))}
-          </div>
-          <div className="text-center mt-10">
-            <Link to="/projects" className="px-6 py-3 bg-secondary text-white font-semibold rounded-lg hover:bg-darkback transition-colors">
-              View All Projects
-            </Link>
-          </div>
-        </AnimatedSection>
+      <Hero />
+      
+      <div className="container mx-auto px-6 py-24" id="featured-work">
+        <motion.h2 
+          className="text-4xl font-bold text-center mb-12"
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          Featured Work
+        </motion.h2>
         
-        <AnimatedSection>
-          <h2 className="text-3xl font-bold text-center mb-10">Featured Portfolio</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredPortfolio.map((item, index) => (
-              <motion.div key={`port-${index}`} whileHover={{ scale: 1.05 }}>
-                 <Card {...item} />
-              </motion.div>
-            ))}
-          </div>
-          <div className="text-center mt-10">
-            <Link to="/portfolio" className="px-6 py-3 bg-secondary text-white font-semibold rounded-lg hover:bg-darkback transition-colors">
-              View All Portfolio Items
-            </Link>
-          </div>
-        </AnimatedSection>
-
-        <AnimatedSection>
-            <div className="text-center mt-20 py-12 bg-accent rounded-lg shadow-xl">
-                <h2 className="text-3xl font-bold mb-4">Let's Create Something Amazing</h2>
-                <p className="text-lg max-w-xl mx-auto mb-6">Have a project in mind? I'm always open to new opportunities.</p>
-                <a href="mailto:kronenfeldlucas@gmail.com" className="px-8 py-4 bg-primary text-white font-bold rounded-lg hover:bg-secondary transition-transform hover:scale-105 inline-block">
-                    Get In Touch
-                </a>
-            </div>
-        </AnimatedSection>
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[300px]"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          {featuredContent.map(item => (
+            <motion.div key={item.id} variants={itemVariants}>
+              <GridItem item={item} size={item.size} />
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     </div>
   );
-};
-
-export default Home;
+}
