@@ -5,6 +5,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import AdminResume from './AdminResume';
 import AdminPortfolio from './AdminPortfolio';
 import AdminProjects from './AdminProjects';
+import AdminPosts from './AdminPosts'; // Import the new component
 
 const sections = ['Posts', 'Resume', 'Portfolio', 'Projects'];
 
@@ -16,7 +17,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
-        navigate('/admin');
+        navigate('/admin'); // Redirect if not authenticated
       }
     });
     return () => unsubscribe();
@@ -40,15 +41,15 @@ export default function AdminDashboard() {
         return <AdminProjects />;
       case 'Posts':
       default:
-        // The existing Post management component will be re-integrated here.
-        return <div>Posts Management Coming Soon</div>;
+        return <AdminPosts />;
     }
   }
 
   return (
-    <div className="bg-background min-h-screen p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+    <div className="bg-background min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* --- Header --- */}
+        <div className="flex justify-between items-center py-6 border-b border-contrast">
           <h1 className="text-3xl font-bold text-text">Admin Dashboard</h1>
           <div className="flex items-center gap-4">
             <Link to="/" className="text-sm text-primary hover:underline">&larr; Back to Site</Link>
@@ -61,28 +62,30 @@ export default function AdminDashboard() {
           </div>
         </div>
         
-        {message && <p className="mb-4 text-center p-3 bg-gray-200 rounded-md text-gray-800">{message}</p>}
+        {message && <p className="my-4 text-center p-3 bg-gray-200 rounded-md text-gray-800">{message}</p>}
 
-        <div className="flex flex-col sm:flex-row gap-6">
-          {/* --- Left Navigation --- */}
-          <div className="sm:w-1/4 bg-contrast p-4 rounded-lg shadow-lg self-start">
-            <h2 className="text-xl font-bold text-white mb-4">Management</h2>
-            <ul>
-              {sections.map(section => (
-                <li key={section}>
-                  <button
-                    onClick={() => setActiveTab(section)}
-                    className={`w-full text-left px-4 py-2 rounded-lg mb-2 transition ${activeTab === section ? "bg-secondary text-white" : "text-white hover:bg-darkback"}`}
-                  >
-                    {section}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* --- Right Content Area --- */}
-          <div className="sm:w-3/4 bg-accent p-6 rounded-lg shadow-inner">
+        {/* --- Top Tab Navigation --- */}
+        <div className="border-b border-contrast">
+          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+            {sections.map(section => (
+              <button
+                key={section}
+                onClick={() => setActiveTab(section)}
+                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === section
+                    ? 'border-secondary text-primary'
+                    : 'border-transparent text-text hover:border-gray-300'
+                }`}
+              >
+                {section}
+              </button>
+            ))}
+          </nav>
+        </div>
+        
+        {/* --- Content Area --- */}
+        <div className="py-8">
+          <div className="bg-accent p-6 rounded-lg shadow-inner">
             {renderActiveComponent()}
           </div>
         </div>
