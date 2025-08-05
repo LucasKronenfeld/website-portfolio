@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { db } from "./firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
-import FeatureRow, { featureRowVariants } from "./components/FeatureRow";
+import FeatureRow from "./components/FeatureRow";
 
 export default function Portfolio() {
   const [portfolioData, setPortfolioData] = useState(null);
@@ -33,16 +33,6 @@ export default function Portfolio() {
     fetchPortfolioData();
   }, []);
   
-  const containerVariants = {
-    offscreen: { opacity: 0 },
-    onscreen: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2, // This will cause each child to animate in 0.2s after the previous one
-      }
-    }
-  };
-
   const categories = portfolioData ? Object.keys(portfolioData) : [];
   const activeArtworks = activeTab && portfolioData ? portfolioData[activeTab] : [];
 
@@ -88,9 +78,10 @@ export default function Portfolio() {
           <motion.div
             key={activeTab}
             className="space-y-16"
-            variants={containerVariants}
-            initial="offscreen"
-            animate="onscreen"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.1 }}
           >
             {activeArtworks && activeArtworks.map((art, index) => (
               <FeatureRow key={`${activeTab}-${index}`} item={art} index={index} />
