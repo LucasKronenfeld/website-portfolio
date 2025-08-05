@@ -2,56 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { db } from './firebaseConfig';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 
-// This data will be uploaded to your database ONCE, the first time the admin resume page is loaded.
-// After that, all data will be managed directly from the database.
 const initialResumeData = {
-    "Summary": "Highly motivated Computer Engineering student with a strong academic record and hands-on experience in IT support, management, and sales. Proven ability to lead teams, solve complex technical problems, and drive customer satisfaction. Seeking opportunities to leverage technical skills and leadership experience in a challenging engineering role.",
-  
-  "Work Experience": [
-    { title: "Ohio State Athletics Dept.", role: "IT Helpdesk Technical Support Specialist", duration: "September 2023 - Present", description: "Troubleshoot and resolve software and hardware issues for professional coaches. Manage technology for live broadcasts during football and basketball games, ensuring seamless operations. Gained hands-on experience with CrowdStrike and various Microsoft products at a commercial level." },
-    { title: "Solon Recreation Camp", role: "Camp Director", duration: "June 2024 - August 2024", description: "Directed a team of 70 counselors, managed activities for 450 campers. Implemented discipline strategies to reduce camper incidents." },
-    { title: "Home Depot", role: "Sales Associate", duration: "May 2022 - June 2024", description: "Achieved sales targets, contributing to a revenue increase. Enhanced customer experience through expert product knowledge." },
-    { title: "Birdigo and Elle Restaurant", role: "Food Service Associate", duration: "August 2021 - August 2022", description: "Managed point-of-sale systems and improved customer satisfaction scores through effective issue resolution." },
-    { title: "Everything Lacrosse", role: "Founder and Manager", duration: "June 2021 - August 2021", description: "Launched and managed a successful lacrosse camp with a 100% satisfaction rate. Recruited and trained a team of coaches." },
-    { title: "Backyard Camp", role: "Founder and Manager", duration: "June 2020 - August 2020", description: "Successfully launched a summer camp during COVID-19 with over 20 signups. Managed 5 counselors, created a safe and engaging environment." },
-  ],
-
-  "Projects": [
-    { title: "Portfolio Website", description: "Personal portfolio showcasing skills and projects.", link: "https://github.com/LucasKronenfeld/website-portfolio" },
-    { title: "Dentist Database creation", description: "design database and queries for a dentist office", link: "https://github.com/LucasKronenfeld/SQL-Project" },
-    { title: "Pixel Tees Store", description: "E-commerce website for selling t-shirts. (payment system shut down).", link: "https://pixeltees.org" },
-
-  ],
-
-  "Skills": {
-    "Programming Languages": ["Assembly", "Python", "C", "C++", "Java", "JavaScript", "HTML", "CSS", "MATLAB", "Swift"],
-    "Web Development": ["HTML", "JavaScript", "CSS", "Web App Development", "React", "Vite", "Tailwind CSS"],
-    "Software": ["XCode", "Microsoft Office Suite", "Eclipse", "Visual Studio Code"],
-    "Databases": ["SQL", "Database Design"],
-    "Creative": ["2D Art", "Digital Design"],
-    "Testing & Tools": ["J-Unit Testing", "MATLAB", "CrowdStrike", "Microsoft Office Suite"],
-    "Networking": ["Network Design", "Troubleshooting"]
-  },
-
-  "Education": [
-    "The Ohio State University (Computer Engineering, Honors Program, GPA: 3.97, Expected Graduation: December 2025)",
-    "Solon High School (Graduated 2022, GPA: 4.45, National Honors Society)"
-  ],
-
-  "Relevant Coursework": {
-    "Software Engineering": ["Software I", "Software II", "Web App Development", "Discrete Math", "Principal of Programming Languages", "Intro to AI"],
-    "Architecture": ["Systems I", "Systems II", "Analog Systems and Circuit Design", "Digital Logic"],
-    "Networking & Databases": ["Computer Networking", "Database Systems"],
-    "Engineering": ["Fundamental Engineering (Honors)", "Statistics", "Calculus", "Software Engineering", "Computer Engineering Ethics"],
-    "Communication and Buissness": ["Entrepreneurship", "Communication technology", "Persuasive Communication", "Violence in Media", "Media and Citizenship", "Introduction to Humanities"],
-    "Creative Design": ["2D Design"],
-  },
-
-  "Volunteer Work": [
-    { title: "Solon Laccrose", role: "Head/Assistant Coach", duration: "2021 - 2024", description: "Volunteered to help coach a few teams in my free time" },
-    { title: "Solon Recreation Center", role: "Head Coach", duration: "2018 - 2022", description: "Led teams to several league championships." },
-    { title: "Solon High School", role: "Peer Tutor", duration: "2021 - 2022", description: "Tutored peers, improving grades by an average of 10%." }
-  ]
+    "Summary": "Please add a summary.",
+    "Work Experience": [], "Projects": [], "Skills": {}, "Education": [], "Relevant Coursework": {}, "Volunteer Work": []
 };
 
 export default function AdminResume() {
@@ -59,18 +12,18 @@ export default function AdminResume() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
+  // --- Data Fetching Effect ---
   useEffect(() => {
     const fetchResumeData = async () => {
       try {
         const docRef = doc(db, 'resume', 'data');
         const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
+        if (docSnap.exists() && docSnap.data().Summary) { // Check if data is substantial
           setResumeData(docSnap.data());
         } else {
-          // If the document doesn't exist, create it with the initial data.
           await setDoc(docRef, initialResumeData);
           setResumeData(initialResumeData);
-          setMessage("Created a new resume document with your initial data. You can now edit it.");
+          setMessage("Initialized resume with empty structure. You can now add your data.");
         }
       } catch (error) {
         console.error('Error fetching or creating resume data:', error);
@@ -79,10 +32,10 @@ export default function AdminResume() {
         setLoading(false);
       }
     };
-
     fetchResumeData();
   }, []);
 
+  // --- Generic Handlers ---
   const handleUpdate = async (e) => {
     e.preventDefault();
     setMessage('Updating...');
@@ -101,7 +54,7 @@ export default function AdminResume() {
     const path = name.split('.');
     
     setResumeData((prevData) => {
-      const newData = JSON.parse(JSON.stringify(prevData)); // Deep copy for safety
+      const newData = JSON.parse(JSON.stringify(prevData));
       let current = newData;
       for (let i = 0; i < path.length - 1; i++) {
         current = current[path[i]];
@@ -111,111 +64,138 @@ export default function AdminResume() {
     });
   };
 
-  const handleJsonChange = (e, section) => {
-    const { value } = e.target;
-     try {
-        const parsedValue = JSON.parse(value);
-        setResumeData(prevData => ({
-            ...prevData,
-            [section]: parsedValue
-        }));
-        setMessage("JSON format is correct.");
-    } catch (error) {
-        setMessage("Error: Invalid JSON format. Please correct it before saving.");
+  // --- List Handlers (Work Experience, Projects, etc.) ---
+  const handleAddItem = (section, newItem) => {
+    setResumeData(prev => ({
+      ...prev,
+      [section]: [...(prev[section] || []), newItem]
+    }));
+  };
+
+  const handleRemoveItem = (section, index) => {
+    setResumeData(prev => ({
+      ...prev,
+      [section]: prev[section].filter((_, i) => i !== index)
+    }));
+  };
+
+  // --- Object Handlers (Skills, Coursework) ---
+  const handleCategoryChange = (section, oldCat, newCat) => {
+     if (oldCat === newCat || !newCat) return;
+     const data = { ...resumeData[section] };
+     data[newCat] = data[oldCat];
+     delete data[oldCat];
+     setResumeData(prev => ({ ...prev, [section]: data }));
+  };
+  
+  const handleItemChange = (section, cat, index, value) => {
+    const data = { ...resumeData[section] };
+    data[cat][index] = value;
+    setResumeData(prev => ({ ...prev, [section]: data }));
+  };
+
+  const handleAddCategory = (section) => {
+    const newCategoryName = prompt("Enter the name for the new category:");
+    if (newCategoryName && !resumeData[section][newCategoryName]) {
+      setResumeData(prev => ({
+        ...prev,
+        [section]: { ...prev[section], [newCategoryName]: [] }
+      }));
     }
-  }
+  };
+  
+  const handleRemoveCategory = (section, cat) => {
+    if (!confirm(`Are you sure you want to remove the category "${cat}"?`)) return;
+    const data = { ...resumeData[section] };
+    delete data[cat];
+    setResumeData(prev => ({ ...prev, [section]: data }));
+  };
 
-  if (loading) {
-    return <div>Loading Resume Editor...</div>;
-  }
+  const handleAddItemToCategory = (section, cat) => {
+    const data = { ...resumeData[section] };
+    data[cat] = [...data[cat], "New Item"];
+    setResumeData(prev => ({...prev, [section]: data}));
+  };
+  
+  const handleRemoveItemFromCategory = (section, cat, index) => {
+    const data = { ...resumeData[section] };
+    data[cat] = data[cat].filter((_, i) => i !== index);
+    setResumeData(prev => ({...prev, [section]: data}));
+  };
 
-  if (!resumeData) {
-    return <div className="text-red-500">Error: Resume data could not be loaded. Please check the console for errors and ensure you are connected to Firestore.</div>;
-  }
+
+  if (loading) return <div>Loading Resume Editor...</div>;
+  if (!resumeData) return <div className="text-red-500">Error: Resume data could not be loaded.</div>;
 
   return (
-    <form onSubmit={handleUpdate} className="space-y-6 bg-accent p-6 rounded-lg shadow-md">
-      <h3 className="text-2xl font-bold text-text">Edit Resume</h3>
+    <form onSubmit={handleUpdate} className="space-y-8 bg-accent p-6 rounded-lg shadow-inner">
+      <div className="flex justify-between items-center">
+        <h3 className="text-2xl font-bold text-text">Edit Resume</h3>
+        <button className="px-6 py-3 bg-secondary text-white font-bold rounded-lg hover:bg-darkback transition-colors" type="submit">
+          Save All Changes
+        </button>
+      </div>
       {message && <p className="text-center p-3 bg-gray-200 rounded-md text-gray-800">{message}</p>}
       
       {/* --- Summary --- */}
       <div className="space-y-2">
-        <label className="text-lg font-semibold text-text">Summary</label>
-        <textarea
-          name="Summary"
-          value={resumeData.Summary || ''}
-          onChange={handleChange}
-          className="w-full p-3 border border-contrast rounded-md h-32"
-        />
-      </div>
-
-      {/* --- Work Experience --- */}
-      <div className="space-y-4">
-        <h4 className="text-xl font-semibold text-text">Work Experience</h4>
-        {resumeData['Work Experience'] && resumeData['Work Experience'].map((item, index) => (
-          <div key={index} className="p-4 border border-dashed border-contrast rounded-md space-y-2">
-            <input name={`Work Experience.${index}.title`} value={item.title} onChange={handleChange} placeholder="Title" className="w-full p-2 border border-contrast rounded"/>
-            <input name={`Work Experience.${index}.role`} value={item.role} onChange={handleChange} placeholder="Role" className="w-full p-2 border border-contrast rounded"/>
-            <input name={`Work Experience.${index}.duration`} value={item.duration} onChange={handleChange} placeholder="Duration" className="w-full p-2 border border-contrast rounded"/>
-            <textarea name={`Work Experience.${index}.description`} value={item.description} onChange={handleChange} placeholder="Description" className="w-full p-2 border border-contrast rounded h-24"/>
-          </div>
-        ))}
+        <label className="text-xl font-semibold text-text">Summary</label>
+        <textarea name="Summary" value={resumeData.Summary} onChange={handleChange} className="w-full p-3 border border-contrast rounded-md h-32"/>
       </div>
       
-      {/* --- Projects --- */}
-      <div className="space-y-4">
-        <h4 className="text-xl font-semibold text-text">Projects</h4>
-        {resumeData.Projects && resumeData.Projects.map((item, index) => (
-          <div key={index} className="p-4 border border-dashed border-contrast rounded-md space-y-2">
-            <input name={`Projects.${index}.title`} value={item.title} onChange={handleChange} placeholder="Title" className="w-full p-2 border border-contrast rounded"/>
-            <input name={`Projects.${index}.link`} value={item.link} onChange={handleChange} placeholder="Link" className="w-full p-2 border border-contrast rounded"/>
-            <textarea name={`Projects.${index}.description`} value={item.description} onChange={handleChange} placeholder="Description" className="w-full p-2 border border-contrast rounded h-24"/>
-          </div>
-        ))}
-      </div>
-      
-      {/* --- Education --- */}
-      <div className="space-y-4">
-        <h4 className="text-xl font-semibold text-text">Education</h4>
-        {resumeData.Education && resumeData.Education.map((item, index) => (
-            <input key={index} name={`Education.${index}`} value={item} onChange={handleChange} placeholder="Education Entry" className="w-full p-2 border border-contrast rounded"/>
-        ))}
-      </div>
-      
-      {/* --- Volunteer Work --- */}
-      <div className="space-y-4">
-        <h4 className="text-xl font-semibold text-text">Volunteer Work</h4>
-        {resumeData['Volunteer Work'] && resumeData['Volunteer Work'].map((item, index) => (
-          <div key={index} className="p-4 border border-dashed border-contrast rounded-md space-y-2">
-            <input name={`Volunteer Work.${index}.title`} value={item.title} onChange={handleChange} placeholder="Title" className="w-full p-2 border border-contrast rounded"/>
-            <input name={`Volunteer Work.${index}.role`} value={item.role} onChange={handleChange} placeholder="Role" className="w-full p-2 border border-contrast rounded"/>
-            <input name={`Volunteer Work.${index}.duration`} value={item.duration} onChange={handleChange} placeholder="Duration" className="w-full p-2 border border-contrast rounded"/>
-            <textarea name={`Volunteer Work.${index}.description`} value={item.description} onChange={handleChange} placeholder="Description" className="w-full p-2 border border-contrast rounded h-24"/>
-          </div>
-        ))}
-      </div>
+      {/* --- Mappable Sections --- */}
+      {Object.entries(resumeData).map(([section, data]) => {
+        if (section === 'Summary') return null;
 
-      {/* --- Skills & Coursework (JSON editor) --- */}
-      <div className="space-y-4">
-        <h4 className="text-xl font-semibold text-text">Skills (Edit in JSON format)</h4>
-         <textarea
-            value={JSON.stringify(resumeData.Skills, null, 2)}
-            onChange={(e) => handleJsonChange(e, 'Skills')}
-            className="w-full p-3 border border-contrast rounded-md h-48 font-mono"
-          />
-      </div>
-      <div className="space-y-4">
-        <h4 className="text-xl font-semibold text-text">Relevant Coursework (Edit in JSON format)</h4>
-         <textarea
-            value={JSON.stringify(resumeData['Relevant Coursework'], null, 2)}
-            onChange={(e) => handleJsonChange(e, 'Relevant Coursework')}
-            className="w-full p-3 border border-contrast rounded-md h-48 font-mono"
-          />
-      </div>
-
-      <button className="w-full px-6 py-3 bg-secondary text-white font-bold rounded-lg hover:bg-darkback transition-colors" type="submit">
-        Save All Resume Changes
-      </button>
+        if (Array.isArray(data)) { // Work Experience, Projects, Education, Volunteer Work
+          const isObjectArray = data.length > 0 && typeof data[0] === 'object';
+          const newItem = isObjectArray ? { title: "", role: "", duration: "", description: "" } : "";
+          
+          return (
+            <div key={section} className="space-y-4 p-4 border border-contrast rounded-lg">
+              <h4 className="text-xl font-semibold text-text">{section}</h4>
+              {data.map((item, index) => (
+                <div key={index} className="p-4 bg-background rounded-md space-y-3 relative">
+                   <button type="button" onClick={() => handleRemoveItem(section, index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
+                  {isObjectArray ? (
+                    Object.keys(item).map(key => (
+                      <div key={key}>
+                        <label className="capitalize text-sm font-medium">{key}</label>
+                        <input name={`${section}.${index}.${key}`} value={item[key]} onChange={handleChange} placeholder={key} className="w-full p-2 border border-contrast rounded"/>
+                      </div>
+                    ))
+                  ) : (
+                     <input name={`${section}.${index}`} value={item} onChange={handleChange} placeholder="Value" className="w-full p-2 border border-contrast rounded"/>
+                  )}
+                </div>
+              ))}
+              <button type="button" onClick={() => handleAddItem(section, newItem)} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add New {section}</button>
+            </div>
+          );
+        } else { // Skills, Relevant Coursework
+          return (
+            <div key={section} className="space-y-4 p-4 border border-contrast rounded-lg">
+                <h4 className="text-xl font-semibold text-text">{section}</h4>
+                {Object.entries(data).map(([cat, items]) => (
+                    <div key={cat} className="p-4 bg-background rounded-md space-y-3">
+                        <div className="flex items-center gap-2">
+                            <input value={cat} onChange={(e) => handleCategoryChange(section, cat, e.target.value)} className="text-lg font-semibold bg-transparent border-b border-contrast"/>
+                            <button type="button" onClick={() => handleRemoveCategory(section, cat)} className="text-red-500 hover:text-red-700 font-bold">&times;</button>
+                        </div>
+                        {items.map((item, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                                <input value={item} onChange={(e) => handleItemChange(section, cat, index, e.target.value)} className="w-full p-2 border border-contrast rounded"/>
+                                <button type="button" onClick={() => handleRemoveItemFromCategory(section, cat, index)} className="text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
+                            </div>
+                        ))}
+                         <button type="button" onClick={() => handleAddItemToCategory(section, cat)} className="px-3 py-1 mt-2 bg-green-600 text-white rounded text-sm hover:bg-green-700">Add Item</button>
+                    </div>
+                ))}
+                <button type="button" onClick={() => handleAddCategory(section)} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add New Category to {section}</button>
+            </div>
+          )
+        }
+      })}
     </form>
   );
 }
