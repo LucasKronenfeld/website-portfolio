@@ -50,7 +50,6 @@ export default function AdminProjects() {
     }
   };
   
-  // --- Category Handlers ---
   const handleAddCategory = () => {
     const newCategoryName = prompt("Enter the name for the new category:");
     if (newCategoryName && !projectsData[newCategoryName]) {
@@ -68,7 +67,6 @@ export default function AdminProjects() {
     setActiveCategoryTab(remainingTabs.length > 0 ? remainingTabs[0] : null);
   };
   
-  // --- Item Handlers ---
   const handleItemChange = (cat, index, field, value) => {
     const data = { ...projectsData };
     data[cat][index][field] = value;
@@ -100,7 +98,6 @@ export default function AdminProjects() {
         </div>
         {message && <p className="text-center p-3 bg-gray-200 rounded-md text-gray-800">{message}</p>}
 
-        {/* --- Nested Tab Navigation for Categories --- */}
         <div className="border-b border-contrast flex justify-between items-center">
           <nav className="-mb-px flex space-x-6" aria-label="Category Tabs">
             {Object.keys(projectsData).map((category) => (
@@ -110,7 +107,7 @@ export default function AdminProjects() {
                 onClick={() => setActiveCategoryTab(category)}
                 className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeCategoryTab === category
-                    ? 'border-secondary text-primary'
+                    ? 'border-secondary text-white'
                     : 'border-transparent text-text hover:border-gray-300'
                 }`}
               >
@@ -118,19 +115,20 @@ export default function AdminProjects() {
               </button>
             ))}
           </nav>
-          <button type="button" onClick={handleAddCategory} className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Add Category</button>
+          <div className="flex items-center gap-2">
+            {activeCategoryTab && (
+              <button type="button" onClick={() => handleRemoveCategory(activeCategoryTab)} className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">Remove '{activeCategoryTab}'</button>
+            )}
+            <button type="button" onClick={handleAddCategory} className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Add Category</button>
+          </div>
         </div>
 
-        {/* --- Editor for the Active Category --- */}
         <div className="space-y-4">
             {activeCategoryTab && projectsData[activeCategoryTab] ? (
                 projectsData[activeCategoryTab].map((item, index) => (
                     <div key={index} className="p-4 bg-background rounded-md space-y-3 relative">
                         <button type="button" onClick={() => handleRemoveItemFromCategory(activeCategoryTab, index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
-                        <div className="flex items-center gap-2">
-                           <h4 className="font-semibold">{item.title || `Item ${index + 1}`}</h4>
-                           <button type="button" onClick={() => handleRemoveCategory(activeCategoryTab)} className="text-red-500 hover:text-red-700 text-xs">(Remove Category)</button>
-                        </div>
+                        <h4 className="font-semibold text-lg pr-8">{item.title || `Item ${index + 1}`}</h4>
                         {Object.keys(item).map(field => (
                             <div key={field}>
                                 <label className="capitalize text-sm font-medium text-text">{field}</label>

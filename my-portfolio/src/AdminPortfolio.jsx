@@ -37,7 +37,6 @@ export default function AdminPortfolio() {
     fetchPortfolioData();
   }, []);
   
-  // --- Generic Update Handler ---
   const handleUpdate = async (e) => {
     e.preventDefault();
     setMessage('Updating...');
@@ -50,14 +49,13 @@ export default function AdminPortfolio() {
       setMessage('Error updating portfolio data.');
     }
   };
-
-  // --- Category Handlers ---
+  
   const handleAddCategory = () => {
     const newCategoryName = prompt("Enter the name for the new category:");
     if (newCategoryName && !portfolioData[newCategoryName]) {
       const newData = { ...portfolioData, [newCategoryName]: [] };
       setPortfolioData(newData);
-      setActiveCategoryTab(newCategoryName); // Switch to the new tab
+      setActiveCategoryTab(newCategoryName);
     }
   };
   
@@ -65,12 +63,10 @@ export default function AdminPortfolio() {
     if (!confirm(`Are you sure you want to remove the category "${catToRemove}" and all its items?`)) return;
     const { [catToRemove]: _, ...rest } = portfolioData;
     setPortfolioData(rest);
-    // Switch to the first available tab or null if no tabs are left
     const remainingTabs = Object.keys(rest);
     setActiveCategoryTab(remainingTabs.length > 0 ? remainingTabs[0] : null);
   };
   
-  // --- Item Handlers ---
   const handleItemChange = (cat, index, field, value) => {
     const data = { ...portfolioData };
     data[cat][index][field] = value;
@@ -89,7 +85,6 @@ export default function AdminPortfolio() {
     setPortfolioData(data);
   };
 
-
   if (loading) return <div>Loading Portfolio Editor...</div>;
   if (!portfolioData) return <div className="text-red-500">Error: Portfolio data could not be loaded.</div>;
 
@@ -103,7 +98,6 @@ export default function AdminPortfolio() {
         </div>
         {message && <p className="text-center p-3 bg-gray-200 rounded-md text-gray-800">{message}</p>}
 
-        {/* --- Nested Tab Navigation for Categories --- */}
         <div className="border-b border-contrast flex justify-between items-center">
           <nav className="-mb-px flex space-x-6" aria-label="Category Tabs">
             {Object.keys(portfolioData).map((category) => (
@@ -113,7 +107,7 @@ export default function AdminPortfolio() {
                 onClick={() => setActiveCategoryTab(category)}
                 className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeCategoryTab === category
-                    ? 'border-secondary text-primary'
+                    ? 'border-secondary text-white'
                     : 'border-transparent text-text hover:border-gray-300'
                 }`}
               >
@@ -121,19 +115,20 @@ export default function AdminPortfolio() {
               </button>
             ))}
           </nav>
-          <button type="button" onClick={handleAddCategory} className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Add Category</button>
+          <div className="flex items-center gap-2">
+            {activeCategoryTab && (
+              <button type="button" onClick={() => handleRemoveCategory(activeCategoryTab)} className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">Remove '{activeCategoryTab}'</button>
+            )}
+            <button type="button" onClick={handleAddCategory} className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Add Category</button>
+          </div>
         </div>
         
-        {/* --- Editor for the Active Category --- */}
         <div className="space-y-4">
             {activeCategoryTab && portfolioData[activeCategoryTab] ? (
                 portfolioData[activeCategoryTab].map((item, index) => (
                     <div key={index} className="p-4 bg-background rounded-md space-y-3 relative">
                         <button type="button" onClick={() => handleRemoveItemFromCategory(activeCategoryTab, index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
-                        <div className="flex items-center gap-2">
-                           <h4 className="font-semibold">{item.title || `Item ${index + 1}`}</h4>
-                           <button type="button" onClick={() => handleRemoveCategory(activeCategoryTab)} className="text-red-500 hover:text-red-700 text-xs">(Remove Category)</button>
-                        </div>
+                        <h4 className="font-semibold text-lg pr-8">{item.title || `Item ${index + 1}`}</h4>
                         {Object.keys(item).map(field => (
                             <div key={field}>
                                 <label className="capitalize text-sm font-medium text-text">{field}</label>
