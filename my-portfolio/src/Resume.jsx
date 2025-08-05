@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { db } from "./firebaseConfig";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const sections = [
   "Full Resume", "Summary", "Work Experience", "Projects", "Skills", "Education", "Relevant Coursework", "Volunteer Work"
 ];
 
-const resumeData = {
-  "Summary": "Highly motivated Computer Engineering student with a strong academic record and hands-on experience in IT support, management, and sales. Proven ability to lead teams, solve complex technical problems, and drive customer satisfaction. Seeking opportunities to leverage technical skills and leadership experience in a challenging engineering role.",
+const initialResumeData = {
+    "Summary": "Highly motivated Computer Engineering student with a strong academic record and hands-on experience in IT support, management, and sales. Proven ability to lead teams, solve complex technical problems, and drive customer satisfaction. Seeking opportunities to leverage technical skills and leadership experience in a challenging engineering role.",
   
   "Work Experience": [
     { title: "Ohio State Athletics Dept.", role: "IT Helpdesk Technical Support Specialist", duration: "September 2023 - Present", description: "Troubleshoot and resolve software and hardware issues for professional coaches. Manage technology for live broadcasts during football and basketball games, ensuring seamless operations. Gained hands-on experience with CrowdStrike and various Microsoft products at a commercial level." },
@@ -55,8 +57,53 @@ const resumeData = {
   ]
 };
 
+// Function to upload initial data to Firestore
+const uploadInitialData = async () => {
+  try {
+    const docRef = doc(db, 'resume', 'data');
+    await setDoc(docRef, initialResumeData);
+    console.log('Initial resume data uploaded successfully!');
+  } catch (error) {
+    console.error('Error uploading initial resume data:', error);
+  }
+};
+
+// Call this function once to upload the data
+// uploadInitialData();
+
+
 export default function Resume() {
   const [activeSection, setActiveSection] = useState("Full Resume");
+  const [resumeData, setResumeData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchResumeData = async () => {
+      try {
+        const docRef = doc(db, 'resume', 'data');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setResumeData(docSnap.data());
+        } else {
+          // If no data in Firestore, use initial data and upload it
+          setResumeData(initialResumeData);
+          uploadInitialData();
+        }
+      } catch (error) {
+        console.error("Error fetching resume data: ", error);
+        // Fallback to initial data if there's an error
+        setResumeData(initialResumeData);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchResumeData();
+  }, []);
+
+  if (loading || !resumeData) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-background rounded-lg p-8 flex">
