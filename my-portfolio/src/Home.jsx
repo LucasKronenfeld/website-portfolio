@@ -11,7 +11,7 @@ const processFetchedData = (portfolioData, projectsData) => {
   // Add featured portfolio items
   for (const category in portfolioData) {
     portfolioData[category].forEach(item => {
-      if (item.featured) {
+      if (item.featured) { // Correctly filter for 'featured'
         combined.push({
           id: `${category}-${item.title}`,
           title: item.title,
@@ -26,7 +26,7 @@ const processFetchedData = (portfolioData, projectsData) => {
   // Add featured project items
   for (const category in projectsData) {
     projectsData[category].forEach(item => {
-      if (item.featured) {
+      if (item.featured) { // Correctly filter for 'featured'
         combined.push({
           id: `${category}-${item.title}`,
           title: item.title,
@@ -92,19 +92,25 @@ export default function Home() {
           Featured Work
         </motion.h2>
         
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[300px]"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-        >
-          {featuredContent.map(item => (
-            <motion.div key={item.id} variants={itemVariants}>
-              <GridItem item={item} size={item.size} />
-            </motion.div>
-          ))}
-        </motion.div>
+        {featuredContent.length > 0 ? (
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[300px]"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
+            {featuredContent.map(item => (
+              <motion.div key={item.id} variants={itemVariants}>
+                <GridItem item={item} size={item.size} />
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <div className="text-center text-muted">
+            <p>No featured items yet. Visit the admin dashboard to select some!</p>
+          </div>
+        )}
       </div>
     </div>
   );

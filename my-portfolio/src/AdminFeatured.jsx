@@ -3,7 +3,8 @@ import { db } from './firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { FaStar } from 'react-icons/fa';
 
-const MAX_FEATURED = 3;
+const MAX_FEATURED_PROJECTS = 3;
+const MAX_FEATURED_PORTFOLIO = 3;
 
 export default function AdminFeatured() {
   const [projectsData, setProjectsData] = useState({});
@@ -30,52 +31,66 @@ export default function AdminFeatured() {
     fetchData();
   }, []);
 
-  const handleToggleFeature = async (type, category, index) => {
-    let data, setData, docRef;
+  const handleToggleFeature = async (type, category, title) => {
+    let allData, setData, docRef, maxFeatured;
     if (type === 'projects') {
-      data = { ...projectsData };
-      setData = setProjectsData;
-      docRef = doc(db, 'projects', 'data');
+        allData = { ...projectsData };
+        setData = setProjectsData;
+        docRef = doc(db, 'projects', 'data');
+        maxFeatured = MAX_FEATURED_PROJECTS;
     } else {
-      data = { ...portfolioData };
-      setData = setPortfolioData;
-      docRef = doc(db, 'portfolio', 'data');
+        allData = { ...portfolioData };
+        setData = setPortfolioData;
+        docRef = doc(db, 'portfolio', 'data');
+        maxFeatured = MAX_FEATURED_PORTFOLIO;
     }
 
-    const item = data[category][index];
-    const currentlyFeatured = Object.values(data).flat().filter(i => i.isFeatured).length;
+    const itemIndex = allData[category].findIndex(item => item.title === title);
+    if (itemIndex === -1) return;
 
-    if (!item.isFeatured && currentlyFeatured >= MAX_FEATURED) {
-      setMessage(`You can only feature up to ${MAX_FEATURED} items.`);
-      return;
+    const item = allData[category][itemIndex];
+    const currentlyFeaturedCount = Object.values(allData).flat().filter(i => i.featured).length;
+
+    // Toggle the featured status
+    const newFeaturedStatus = !item.featured;
+
+    if (newFeaturedStatus && currentlyFeaturedCount >= maxFeatured) {
+        setMessage(`You can only feature up to ${maxFeatured} ${type}.`);
+        return;
     }
 
-    item.isFeatured = !item.isFeatured;
-    setData(data);
+    // Create a new object for the item to ensure state updates correctly
+    allData[category][itemIndex] = { ...item, featured: newFeaturedStatus };
+
+    // Update the state to reflect the change immediately
+    setData({ ...allData });
 
     try {
-      await updateDoc(docRef, data);
-      setMessage('Featured item updated successfully!');
-      fetchData(); // Refresh data to ensure consistency
+        await updateDoc(docRef, allData);
+        setMessage('Featured item updated successfully!');
     } catch (error) {
-      setMessage('Error updating featured item: ' + error.message);
+        setMessage('Error updating featured item: ' + error.message);
+        // Revert the change in UI if the update fails
+        allData[category][itemIndex] = { ...item, featured: !newFeaturedStatus };
+        setData({ ...allData });
     }
   };
 
   const renderSection = (title, data, type) => (
     <div className="space-y-4">
       <h3 className="text-xl font-bold text-text">{title}</h3>
-      <div className="p-4 bg-background rounded-md space-y-3">
-        {Object.entries(data).map(([category, items]) => (
+      <div className="p-4 bg-background rounded-md space-y-3 border border-white/10">
+        {Object.keys(data).length === 0 ? <p className="text-muted">No {type} found.</p> : 
+        Object.entries(data).map(([category, items]) => (
           <div key={category}>
-            <h4 className="font-semibold text-lg text-text-secondary">{category}</h4>
-            <ul className="list-disc list-inside pl-4">
+            <h4 className="font-semibold text-lg text-primary">{category}</h4>
+            <ul className="list-inside pl-4 space-y-2 mt-2">
               {items.map((item, index) => (
-                <li key={index} className="flex items-center gap-4 py-1">
-                  <button onClick={() => handleToggleFeature(type, category, index)}>
-                    <FaStar className={item.isFeatured ? 'text-yellow-400' : 'text-gray-500'} />
+                <li key={index} className="flex items-center gap-4 py-1 text-muted">
+                  <button onClick={() => handleToggleFeature(type, category, item.title)} className="focus:outline-none">
+                    <FaStar className={`${item.featured ? 'text-yellow-400' : 'text-gray-500 hover:text-yellow-400'} transition-colors`} />
                   </button>
-                  <span>{item.title}</span>
+                  <span className="text-text">{item.title}</span>
                 </li>
               ))}
             </ul>
@@ -85,13 +100,13 @@ export default function AdminFeatured() {
     </div>
   );
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="text-center text-muted">Loading featured content...</div>;
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-text">Manage Featured Content</h2>
-      <p>Select up to 3 projects and 3 portfolio items to feature on the homepage.</p>
-      {message && <p className="text-center p-3 bg-gray-200 rounded-md text-gray-800">{message}</p>}
+      <p className="text-muted">Select up to 3 projects and 3 portfolio items to feature on the homepage.</p>
+      {message && <p className={`text-center p-3 rounded-md ${message.includes('Error') ? 'bg-red-900/50 text-red-300' : 'bg-green-900/50 text-green-300'}`}>{message}</p>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {renderSection('Projects', projectsData, 'projects')}
         {renderSection('Portfolio', portfolioData, 'portfolio')}

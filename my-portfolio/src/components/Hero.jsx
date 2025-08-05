@@ -27,7 +27,7 @@ export default function Hero() {
   return (
     <div className="relative h-screen flex flex-col items-center justify-center text-center bg-background text-text">
       <div className="absolute inset-0 z-0 opacity-50">
-        <Canvas>
+        <Canvas frameloop="demand">
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} />
           <OrbitControls enableZoom={false} enablePan={false} />
