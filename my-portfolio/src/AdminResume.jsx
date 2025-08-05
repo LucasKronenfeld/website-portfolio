@@ -1,239 +1,176 @@
 import React, { useState, useEffect } from 'react';
 import { db } from './firebaseConfig';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const initialResumeData = {
-    "Summary": "Please add a summary.",
-    "Work Experience": [], "Projects": [], "Skills": {}, "Education": [], "Relevant Coursework": {}, "Volunteer Work": []
-};
+// --- Shared Form Components ---
+const FormInput = (props) => <input {...props} className="w-full p-2 bg-background border border-white/20 rounded-md text-text focus:ring-primary focus:border-primary" />;
+const FormTextarea = (props) => <textarea {...props} className="w-full p-2 bg-background border border-white/20 rounded-md text-text focus:ring-primary focus:border-primary h-32" />;
+const AddButton = ({ children, ...props }) => <button type="button" {...props} className="mt-2 px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition">{children}</button>;
+const RemoveButton = ({ children, ...props }) => <button type="button" {...props} className="text-red-500 hover:text-red-400 transition font-semibold">{children}</button>;
+const SaveButton = ({ children, ...props }) => <button {...props} className="px-6 py-2 bg-primary text-white font-bold rounded-lg hover:bg-opacity-90 transition-colors">{children}</button>;
+
+const initialResumeData = { "Summary": "", "Work Experience": [], "Projects": [], "Skills": {}, "Education": [], "Relevant Coursework": {}, "Volunteer Work": [] };
+const orderedSections = ["Summary", "Work Experience", "Projects", "Skills", "Education", "Relevant Coursework", "Volunteer Work"];
 
 export default function AdminResume() {
-  const [resumeData, setResumeData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
-  const [activeSection, setActiveSection] = useState('Summary');
+    const [resumeData, setResumeData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [message, setMessage] = useState('');
+    const [activeSection, setActiveSection] = useState('Summary');
 
-  // --- Data Fetching Effect ---
-  useEffect(() => {
-    const fetchResumeData = async () => {
-      try {
-        const docRef = doc(db, 'resume', 'data');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists() && docSnap.data().Summary) { // Check if data is substantial
-          setResumeData(docSnap.data());
-        } else {
-          await setDoc(docRef, initialResumeData);
-          setResumeData(initialResumeData);
-          setMessage("Initialized resume with empty structure. You can now add your data.");
+    useEffect(() => {
+        const fetchResumeData = async () => {
+            const docRef = doc(db, 'resume', 'data');
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                setResumeData(docSnap.data());
+            } else {
+                await setDoc(docRef, initialResumeData);
+                setResumeData(initialResumeData);
+            }
+            setLoading(false);
+        };
+        fetchResumeData();
+    }, []);
+
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        setMessage('Updating...');
+        try {
+            await updateDoc(doc(db, 'resume', 'data'), resumeData);
+            setMessage('Resume updated successfully!');
+        } catch (error) {
+            setMessage('Error updating resume.');
         }
-      } catch (error) {
-        console.error('Error fetching or creating resume data:', error);
-        setMessage('Error fetching resume data.');
-      } finally {
-        setLoading(false);
-      }
     };
-    fetchResumeData();
-  }, []);
 
-  // --- Generic Handlers ---
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-    setMessage('Updating...');
-    try {
-      const docRef = doc(db, 'resume', 'data');
-      await updateDoc(docRef, resumeData);
-      setMessage('Resume data updated successfully!');
-    } catch (error) {
-      console.error('Error updating resume data:', error);
-      setMessage('Error updating resume data.');
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    const path = name.split('.');
+    const updateNestedState = (path, value) => {
+        setResumeData(prev => {
+            const newState = JSON.parse(JSON.stringify(prev));
+            let current = newState;
+            for (let i = 0; i < path.length - 1; i++) {
+                current = current[path[i]];
+            }
+            current[path[path.length - 1]] = value;
+            return newState;
+        });
+    };
     
-    setResumeData((prevData) => {
-      const newData = JSON.parse(JSON.stringify(prevData));
-      let current = newData;
-      for (let i = 0; i < path.length - 1; i++) {
-        current = current[path[i]];
-      }
-      current[path[path.length - 1]] = value;
-      return newData;
-    });
-  };
+    const handleAdd = (path, newItem) => {
+        const currentItems = path.reduce((acc, key) => acc[key], resumeData) || [];
+        updateNestedState(path, [...currentItems, newItem]);
+    };
 
-  // --- List Handlers (Work Experience, Projects, etc.) ---
-  const handleAddItem = (section, newItem) => {
-    setResumeData(prev => ({
-      ...prev,
-      [section]: [...(prev[section] || []), newItem]
-    }));
-  };
+    const handleRemove = (path, index) => {
+        const currentItems = path.reduce((acc, key) => acc[key], resumeData);
+        updateNestedState(path, currentItems.filter((_, i) => i !== index));
+    };
 
-  const handleRemoveItem = (section, index) => {
-    setResumeData(prev => ({
-      ...prev,
-      [section]: prev[section].filter((_, i) => i !== index)
-    }));
-  };
+    const renderSectionEditor = () => {
+        const data = resumeData[activeSection];
+        switch (activeSection) {
+            case 'Summary':
+                return <FormTextarea value={data} onChange={e => updateNestedState(['Summary'], e.target.value)} />;
 
-  // --- Object Handlers (Skills, Coursework) ---
-  const handleCategoryChange = (section, oldCat, newCat) => {
-     if (oldCat === newCat || !newCat) return;
-     const data = { ...resumeData[section] };
-     data[newCat] = data[oldCat];
-     delete data[oldCat];
-     setResumeData(prev => ({ ...prev, [section]: data }));
-  };
-  
-  const handleItemChange = (section, cat, index, value) => {
-    const data = { ...resumeData[section] };
-    data[cat][index] = value;
-    setResumeData(prev => ({ ...prev, [section]: data }));
-  };
-
-  const handleAddCategory = (section) => {
-    const newCategoryName = prompt("Enter the name for the new category:");
-    if (newCategoryName && !resumeData[section][newCategoryName]) {
-      setResumeData(prev => ({
-        ...prev,
-        [section]: { ...prev[section], [newCategoryName]: [] }
-      }));
-    }
-  };
-  
-  const handleRemoveCategory = (section, cat) => {
-    if (!confirm(`Are you sure you want to remove the category "${cat}"?`)) return;
-    const data = { ...resumeData[section] };
-    delete data[cat];
-    setResumeData(prev => ({ ...prev, [section]: data }));
-  };
-
-  const handleAddItemToCategory = (section, cat) => {
-    const data = { ...resumeData[section] };
-    data[cat] = [...data[cat], "New Item"];
-    setResumeData(prev => ({...prev, [section]: data}));
-  };
-  
-  const handleRemoveItemFromCategory = (section, cat, index) => {
-    const data = { ...resumeData[section] };
-    data[cat] = data[cat].filter((_, i) => i !== index);
-    setResumeData(prev => ({...prev, [section]: data}));
-  };
-
-  const renderSectionEditor = () => {
-    const section = activeSection;
-    const data = resumeData[section];
-
-    if (section === 'Summary') {
-        return (
-            <div className="space-y-2">
-                <label className="text-xl font-semibold text-text">Summary</label>
-                <textarea name="Summary" value={resumeData.Summary} onChange={handleChange} className="w-full p-3 border border-contrast rounded-md h-48"/>
-            </div>
-        )
-    }
-
-    if (Array.isArray(data)) { // For Work Experience, Projects, Education, Volunteer Work
-      const isObjectArray = data.length > 0 && typeof data[0] === 'object';
-      const newItem = isObjectArray ? { title: "", role: "", duration: "", description: "" } : "";
-      
-      return (
-        <div className="space-y-4">
-          {data.map((item, index) => (
-            <div key={index} className="p-4 bg-background rounded-md space-y-3 relative">
-               <button type="button" onClick={() => handleRemoveItem(section, index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
-              {isObjectArray ? (
-                Object.keys(item).map(key => (
-                  <div key={key}>
-                    <label className="capitalize text-sm font-medium">{key}</label>
-                    <input name={`${section}.${index}.${key}`} value={item[key]} onChange={handleChange} placeholder={key} className="w-full p-2 border border-contrast rounded"/>
-                  </div>
-                ))
-              ) : (
-                 <input name={`${section}.${index}`} value={item} onChange={handleChange} placeholder="Value" className="w-full p-2 border border-contrast rounded"/>
-              )}
-            </div>
-          ))}
-          <button type="button" onClick={() => handleAddItem(section, newItem)} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add New {section}</button>
-        </div>
-      );
-    } 
-
-    if (typeof data === 'object') { // For Skills, Relevant Coursework
-        return (
-            <div className="space-y-4">
-                {Object.entries(data).map(([cat, items]) => (
-                    <div key={cat} className="p-4 bg-background rounded-md space-y-3">
-                        <div className="flex items-center gap-2">
-                            <input value={cat} onChange={(e) => handleCategoryChange(section, cat, e.target.value)} className="text-lg font-semibold bg-transparent border-b border-contrast"/>
-                            <button type="button" onClick={() => handleRemoveCategory(section, cat)} className="text-red-500 hover:text-red-700 font-bold">&times;</button>
-                        </div>
-                        {items.map((item, index) => (
-                            <div key={index} className="flex items-center gap-2">
-                                <input value={item} onChange={(e) => handleItemChange(section, cat, index, e.target.value)} className="w-full p-2 border border-contrast rounded"/>
-                                <button type="button" onClick={() => handleRemoveItemFromCategory(section, cat, index)} className="text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
+            case 'Work Experience':
+            case 'Projects':
+            case 'Volunteer Work':
+                return (
+                    <div className="space-y-4">
+                        {data.map((item, index) => (
+                            <div key={index} className="p-4 bg-background rounded-lg border border-white/10 space-y-3">
+                                <div className="flex justify-end"><RemoveButton onClick={() => handleRemove([activeSection], index)}>Remove Item</RemoveButton></div>
+                                {Object.keys(item).map(key => (
+                                    <div key={key}>
+                                        <label className="capitalize text-sm text-muted block mb-1">{key}</label>
+                                        <FormInput value={item[key]} onChange={e => updateNestedState([activeSection, index, key], e.target.value)} />
+                                    </div>
+                                ))}
                             </div>
                         ))}
-                         <button type="button" onClick={() => handleAddItemToCategory(section, cat)} className="px-3 py-1 mt-2 bg-green-600 text-white rounded text-sm hover:bg-green-700">Add Item</button>
+                        <AddButton onClick={() => handleAdd([activeSection], { title: "", role: "", duration: "", description: "" })}>Add {activeSection.slice(0, -1)}</AddButton>
                     </div>
-                ))}
-                <button type="button" onClick={() => handleAddCategory(section)} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add New Category to {section}</button>
-            </div>
-        )
-    }
+                );
+            
+            case 'Education':
+                 return (
+                    <div className="space-y-4">
+                        {data.map((item, index) => (
+                            <div key={index} className="p-4 bg-background rounded-lg border border-white/10 flex items-center gap-4">
+                               <FormInput value={item} onChange={e => updateNestedState([activeSection, index], e.target.value)} />
+                               <RemoveButton onClick={() => handleRemove([activeSection], index)}>✕</RemoveButton>
+                            </div>
+                        ))}
+                        <AddButton onClick={() => handleAdd([activeSection], "New School (Degree, Graduation Year)")}>Add Education</AddButton>
+                    </div>
+                );
 
-    return <div>Select a section to edit.</div>
-  }
+            case 'Skills':
+            case 'Relevant Coursework':
+                return (
+                    <div className="space-y-6">
+                        {Object.entries(data).map(([category, items]) => (
+                            <div key={category} className="p-4 bg-background rounded-lg border border-white/10">
+                                <div className="flex justify-between items-center mb-2">
+                                    <h4 className="text-lg font-semibold text-primary">{category}</h4>
+                                    <RemoveButton onClick={() => {
+                                        const { [category]: _, ...rest } = resumeData[activeSection];
+                                        updateNestedState([activeSection], rest);
+                                    }}>Remove Category</RemoveButton>
+                                </div>
+                                <div className="space-y-2">
+                                    {items.map((item, index) => (
+                                        <div key={index} className="flex items-center gap-2">
+                                            <FormInput value={item} onChange={e => updateNestedState([activeSection, category, index], e.target.value)} />
+                                            <RemoveButton onClick={() => handleRemove([activeSection, category], index)}>✕</RemoveButton>
+                                        </div>
+                                    ))}
+                                    <AddButton onClick={() => handleAdd([activeSection, category], "New Item")}>Add Item</AddButton>
+                                </div>
+                            </div>
+                        ))}
+                        <AddButton onClick={() => {
+                            const newCat = prompt("Enter new category name:");
+                            if (newCat) updateNestedState([activeSection, newCat], []);
+                        }}>Add New Category</AddButton>
+                    </div>
+                );
 
-  if (loading) return <div>Loading Resume Editor...</div>;
-  if (!resumeData) return <div className="text-red-500">Error: Resume data could not be loaded.</div>;
-  
-  const sections = Object.keys(resumeData);
+            default:
+                return <p className="text-muted">Select a section to begin editing.</p>;
+        }
+    };
 
-  return (
-    <div className="flex gap-8">
-      {/* --- Left Navigation --- */}
-      <div className="w-1/4 bg-contrast p-4 rounded-lg shadow-lg">
-        <h3 className="text-xl font-bold text-white mb-4">Sections</h3>
-        <ul>
-          {sections.map(section => (
-            <li key={section}>
-              <button
-                onClick={() => setActiveSection(section)}
-                className={`w-full text-left px-4 py-2 rounded-lg mb-2 transition ${activeSection === section ? "bg-secondary text-white" : "text-white hover:bg-darkback"}`}
-              >
-                {section}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
+    if (loading) return <div className="text-muted text-center p-8">Loading Resume Editor...</div>;
 
-      {/* --- Right Editor --- */}
-      <form onSubmit={handleUpdate} className="w-3/4 space-y-6">
-        <div className="flex justify-between items-center">
-          <h3 className="text-2xl font-bold text-text">Editing: {activeSection}</h3>
-          <button className="px-6 py-3 bg-secondary text-white font-bold rounded-lg hover:bg-darkback transition-colors" type="submit">
-            Save All Changes
-          </button>
+    return (
+        <div className="flex flex-col md:flex-row gap-6">
+            <aside className="w-full md:w-1/4">
+                <ul className="space-y-1 sticky top-24">
+                    {orderedSections.map(section => (
+                        <li key={section}>
+                            <button onClick={() => setActiveSection(section)} className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${activeSection === section ? "bg-primary text-white font-semibold" : "text-muted hover:bg-surface"}`}>
+                                {section}
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            </aside>
+            <main className="w-full md:w-3/4">
+                <form onSubmit={handleUpdate} className="space-y-4">
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-2xl font-bold text-text">Editing: {activeSection}</h3>
+                        <SaveButton type="submit">Save All Changes</SaveButton>
+                    </div>
+                    {message && <p className="text-center p-3 rounded-md text-green-300 bg-green-900/50 text-sm">{message}</p>}
+                    <AnimatePresence mode="wait">
+                        <motion.div key={activeSection} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+                            {resumeData && renderSectionEditor()}
+                        </motion.div>
+                    </AnimatePresence>
+                </form>
+            </main>
         </div>
-        {message && <p className="text-center p-3 bg-gray-200 rounded-md text-gray-800">{message}</p>}
-
-        <motion.div
-            key={activeSection}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="p-4 border border-dashed border-contrast rounded-lg"
-        >
-            {renderSectionEditor()}
-        </motion.div>
-      </form>
-    </div>
-  );
+    );
 }

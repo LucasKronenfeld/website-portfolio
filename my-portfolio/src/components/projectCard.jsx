@@ -1,29 +1,25 @@
+import { motion } from 'framer-motion';
+
 const ProjectCard = ({ imageSrc, title, description, link }) => {
   return (
-    <div className="bg-surface rounded-2xl shadow-lg overflow-hidden flex flex-col h-full border border-white/10">
-      {/* Image */}
-      <div className="w-full h-48 overflow-hidden">
-        <img src={imageSrc} alt={title} className="w-full h-full object-cover" />
+    <motion.a
+      href={link}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="relative w-full h-full rounded-lg overflow-hidden shadow-lg group block"
+      whileHover={{ scale: 1.03 }}
+      transition={{ type: "spring", stiffness: 300 }}
+    >
+      <img src={imageSrc} alt={title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+        <h3 className="text-xl font-bold">{title}</h3>
+        <p className="text-sm opacity-80">{description}</p>
+        <span className="text-sm font-semibold mt-2 inline-block opacity-90 group-hover:opacity-100 transition-opacity">
+          Inspect &rarr;
+        </span>
       </div>
-      
-      {/* Content */}
-      <div className="p-4 flex-grow">
-        <h3 className="text-xl font-semibold text-text">{title}</h3>
-        <p className="text-muted mt-2">{description}</p>
-      </div>
-
-      {/* Button */}
-      <div className="p-4 pt-0">
-        <a
-          href={link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full block text-center px-4 py-2 bg-secondary text-white rounded-lg hover:bg-opacity-80 transition-all"
-        >
-          Inspect
-        </a>
-      </div>
-    </div>
+    </motion.a>
   );
 };
 

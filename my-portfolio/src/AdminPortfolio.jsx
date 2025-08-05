@@ -1,168 +1,134 @@
 import React, { useState, useEffect } from 'react';
 import { db } from './firebaseConfig';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const initialPortfolioData = {
-    "Pixel": [
-      { imageUrl: "/pixel/pixelPenguin.png", title: "Pixel Penguin", description: "A pixel art piece.", isFeatured: false },
-      { imageUrl: "/pixel/pixilPanda.png", title: "Pixel Panda", description: "A pixel art piece.", isFeatured: false },
-      { imageUrl: "/pixel/pixilOrchid.png", title: "Pixel Orchid", description: "A pixel art piece.", isFeatured: false },
-    ],
-    "2D": [
-      { imageUrl: "/TwoDArt/chase.jpg", title: "Lucas and Charles", description: "A 2D artwork.", isFeatured: false },
-      { imageUrl: "/TwoDArt/lucasLogoman.png", title: "Logoman", description: "A 2D artwork.", isFeatured: false },
-    ],
-    "Photography": [
-      { imageUrl: "/modernDeskWork.png", title: "Modern Desk Work", description: "A beautiful shot.", isFeatured: false },
-    ],
-};
+// --- Shared Form Components ---
+const FormInput = (props) => <input {...props} className="w-full p-2 bg-background border border-white/20 rounded-md text-text focus:ring-primary focus:border-primary" />;
+const AddButton = ({ children, ...props }) => <button type="button" {...props} className="mt-2 px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition">{children}</button>;
+const RemoveButton = ({ children, ...props }) => <button type="button" {...props} className="text-red-500 hover:text-red-400 transition font-semibold">{children}</button>;
+const SaveButton = ({ children, ...props }) => <button {...props} className="px-6 py-2 bg-primary text-white font-bold rounded-lg hover:bg-opacity-90 transition-colors">{children}</button>;
+const TabButton = ({ children, active, ...props }) => (
+    <button type="button" {...props} className={`whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm transition-colors ${active ? 'border-primary text-primary' : 'border-transparent text-muted hover:border-gray-500 hover:text-text'}`}>
+        {children}
+    </button>
+);
+
+const portfolioFieldOrder = ['title', 'description', 'imageUrl', 'featured'];
 
 export default function AdminPortfolio() {
-  const [portfolioData, setPortfolioData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
-  const [activeCategoryTab, setActiveCategoryTab] = useState(null);
+    const [portfolioData, setPortfolioData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [message, setMessage] = useState('');
+    const [activeCategory, setActiveCategory] = useState(null);
 
-  useEffect(() => {
-    const fetchPortfolioData = async () => {
-      try {
-        const docRef = doc(db, 'portfolio', 'data');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists() && Object.keys(docSnap.data()).length > 0) {
-          const data = docSnap.data();
-          // Ensure all items have the isFeatured flag
-          Object.keys(data).forEach(category => {
-            data[category].forEach(item => {
-              if (item.isFeatured === undefined) {
-                item.isFeatured = false;
-              }
-            });
-          });
-          setPortfolioData(data);
-          setActiveCategoryTab(Object.keys(data)[0]);
-        } else {
-          await setDoc(docRef, initialPortfolioData);
-          setPortfolioData(initialPortfolioData);
-          setActiveCategoryTab(Object.keys(initialPortfolioData)[0]);
-          setMessage("Initialized portfolio with your legacy data.");
+    useEffect(() => {
+        const fetchPortfolioData = async () => {
+            const docRef = doc(db, 'portfolio', 'data');
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists() && Object.keys(docSnap.data()).length > 0) {
+                const data = docSnap.data();
+                setPortfolioData(data);
+                if (!activeCategory) setActiveCategory(Object.keys(data)[0]);
+            } else {
+                await setDoc(docRef, { "Example Category": [] });
+                setPortfolioData({ "Example Category": [] });
+                setActiveCategory("Example Category");
+            }
+            setLoading(false);
+        };
+        fetchPortfolioData();
+    }, []);
+
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        setMessage('Updating...');
+        try {
+            await updateDoc(doc(db, 'portfolio', 'data'), portfolioData);
+            setMessage('Portfolio updated successfully!');
+        } catch (error) {
+            setMessage('Error updating portfolio.');
         }
-      } catch (error) {
-        console.error('Error handling portfolio data:', error);
-        setMessage('Error fetching or creating portfolio data.');
-      } finally {
-        setLoading(false);
-      }
     };
-    fetchPortfolioData();
-  }, []);
-  
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-    setMessage('Updating...');
-    try {
-      const docRef = doc(db, 'portfolio', 'data');
-      await updateDoc(docRef, portfolioData);
-      setMessage('Portfolio updated successfully!');
-    } catch (error) {
-      console.error('Error updating portfolio data:', error);
-      setMessage('Error updating portfolio data.');
-    }
-  };
-  
-  const handleAddCategory = () => {
-    const newCategoryName = prompt("Enter the name for the new category:");
-    if (newCategoryName && !portfolioData[newCategoryName]) {
-      const newData = { ...portfolioData, [newCategoryName]: [] };
-      setPortfolioData(newData);
-      setActiveCategoryTab(newCategoryName);
-    }
-  };
-  
-  const handleRemoveCategory = (catToRemove) => {
-    if (!confirm(`Are you sure you want to remove the category "${catToRemove}" and all its items?`)) return;
-    const { [catToRemove]: _, ...rest } = portfolioData;
-    setPortfolioData(rest);
-    const remainingTabs = Object.keys(rest);
-    setActiveCategoryTab(remainingTabs.length > 0 ? remainingTabs[0] : null);
-  };
-  
-  const handleItemChange = (cat, index, field, value) => {
-    const data = { ...portfolioData };
-    data[cat][index][field] = value;
-    setPortfolioData(data);
-  };
+    
+    const updateState = (path, value) => {
+        setPortfolioData(prev => {
+            const newState = JSON.parse(JSON.stringify(prev));
+            let current = newState;
+            for (let i = 0; i < path.length - 1; i++) {
+                current = current[path[i]];
+            }
+            current[path[path.length - 1]] = value;
+            return newState;
+        });
+    };
 
-  const handleAddItemToCategory = (cat) => {
-    const data = { ...portfolioData };
-    data[cat] = [...data[cat], { imageUrl: "", title: "", description: "", isFeatured: false }];
-    setPortfolioData(data);
-  };
-  
-  const handleRemoveItemFromCategory = (cat, index) => {
-    const data = { ...portfolioData };
-    data[cat] = data[cat].filter((_, i) => i !== index);
-    setPortfolioData(data);
-  };
+    const handleAddCategory = () => {
+        const newCat = prompt("Enter new category name:");
+        if (newCat && !portfolioData[newCat]) {
+            updateState([newCat], []);
+            setActiveCategory(newCat);
+        }
+    };
+    
+    const handleRemoveCategory = (catToRemove) => {
+        if (!confirm(`Are you sure you want to remove the category "${catToRemove}" and all its items?`)) return;
+        const { [catToRemove]: _, ...rest } = portfolioData;
+        setPortfolioData(rest);
+        const remainingCats = Object.keys(rest);
+        setActiveCategory(remainingCats.length > 0 ? remainingCats[0] : null);
+    };
 
-  if (loading) return <div>Loading Portfolio Editor...</div>;
-  if (!portfolioData) return <div className="text-red-500">Error: Portfolio data could not be loaded.</div>;
+    const handleAddItem = (category) => {
+        const newItem = { title: "", description: "", imageUrl: "", featured: false };
+        const currentItems = portfolioData[category] || [];
+        updateState([category], [...currentItems, newItem]);
+    };
+    
+    if (loading) return <div className="text-muted text-center p-8">Loading Portfolio Editor...</div>;
+    
+    return (
+        <form onSubmit={handleUpdate} className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h3 className="text-2xl font-bold text-text">Edit Portfolio</h3>
+                <SaveButton type="submit">Save Portfolio</SaveButton>
+            </div>
+             {message && <p className="text-center p-3 rounded-md text-green-300 bg-green-900/50 text-sm">{message}</p>}
 
-  return (
-    <form onSubmit={handleUpdate} className="space-y-6">
-        <div className="flex justify-between items-center">
-            <h3 className="text-2xl font-bold text-text">Edit Portfolio</h3>
-            <button className="px-6 py-3 bg-secondary text-white font-bold rounded-lg hover:bg-darkback transition-colors" type="submit">
-                Save All Portfolio Changes
-            </button>
-        </div>
-        {message && <p className="text-center p-3 bg-gray-200 rounded-md text-gray-800">{message}</p>}
-
-        <div className="border-b border-contrast flex justify-between items-center">
-          <nav className="-mb-px flex space-x-6" aria-label="Category Tabs">
-            {Object.keys(portfolioData).map((category) => (
-              <button
-                key={category}
-                type="button"
-                onClick={() => setActiveCategoryTab(category)}
-                className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeCategoryTab === category
-                    ? 'border-secondary text-white'
-                    : 'border-transparent text-text hover:border-gray-300'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </nav>
-          <div className="flex items-center gap-2">
-            {activeCategoryTab && (
-              <button type="button" onClick={() => handleRemoveCategory(activeCategoryTab)} className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">Remove '{activeCategoryTab}'</button>
-            )}
-            <button type="button" onClick={handleAddCategory} className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Add Category</button>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-            {activeCategoryTab && portfolioData[activeCategoryTab] ? (
-                portfolioData[activeCategoryTab].map((item, index) => (
-                    <div key={index} className="p-4 bg-background rounded-md space-y-3 relative">
-                        <button type="button" onClick={() => handleRemoveItemFromCategory(activeCategoryTab, index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
-                        <h4 className="font-semibold text-lg pr-8">{item.title || `Item ${index + 1}`}</h4>
-                        {Object.keys(item).map(field => (
-                           field !== 'isFeatured' && <div key={field}>
-                                <label className="capitalize text-sm font-medium text-text">{field}</label>
-                                <input value={item[field]} onChange={(e) => handleItemChange(activeCategoryTab, index, field, e.target.value)} placeholder={field} className="w-full p-2 border border-contrast rounded"/>
+            <div className="border-b border-white/10 flex justify-between items-center gap-4">
+                <nav className="flex-grow flex space-x-2" aria-label="Category Tabs">
+                    {portfolioData && Object.keys(portfolioData).map((cat) => (
+                        <TabButton key={cat} active={activeCategory === cat} onClick={() => setActiveCategory(cat)}>
+                            {cat}
+                        </TabButton>
+                    ))}
+                </nav>
+                 <AddButton onClick={handleAddCategory}>Add Category</AddButton>
+                 {activeCategory && <RemoveButton onClick={() => handleRemoveCategory(activeCategory)}>Remove '{activeCategory}'</RemoveButton>}
+            </div>
+            
+            <AnimatePresence mode="wait">
+                <motion.div key={activeCategory} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="space-y-4">
+                    {activeCategory && portfolioData[activeCategory] ? (
+                        portfolioData[activeCategory].map((item, index) => (
+                            <div key={index} className="p-4 bg-background rounded-lg border border-white/10 space-y-3">
+                                <div className="flex justify-between items-center"><h4 className="font-semibold text-lg text-primary">{item.title || `Item ${index + 1}`}</h4><RemoveButton onClick={() => updateState([activeCategory], portfolioData[activeCategory].filter((_, i) => i !== index))}>Remove Item</RemoveButton></div>
+                                {portfolioFieldOrder.map(field => (
+                                    (item.hasOwnProperty(field)) && <div key={field}>
+                                        <label className="capitalize text-sm text-muted block mb-1">{field}</label>
+                                        {field === 'featured' ? (
+                                            <input type="checkbox" checked={item[field]} onChange={e => updateState([activeCategory, index, field], e.target.checked)} className="h-5 w-5 rounded bg-background border-white/20 text-primary focus:ring-primary"/>
+                                        ) : (
+                                            <FormInput value={item[field]} onChange={(e) => updateState([activeCategory, index, field], e.target.value)} placeholder={field} />
+                                        )}
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                ))
-            ) : (
-                <p>No category selected. Please add or select a category.</p>
-            )}
-            {activeCategoryTab && (
-                 <button type="button" onClick={() => handleAddItemToCategory(activeCategoryTab)} className="px-3 py-1 mt-2 bg-green-600 text-white rounded text-sm hover:bg-green-700">Add Item to {activeCategoryTab}</button>
-            )}
-        </div>
-    </form>
-  );
+                        ))
+                    ) : <p className="text-muted">Select a category to see its items.</p>}
+                     {activeCategory && <AddButton onClick={() => handleAddItem(activeCategory)}>Add Item to {activeCategory}</AddButton>}
+                </motion.div>
+            </AnimatePresence>
+        </form>
+    );
 }

@@ -10,12 +10,16 @@ const sections = [
 const SectionContent = ({ section, data }) => {
   if (!data) return <p className="text-muted">No data available for this section.</p>;
 
-  // Specific layout for "Projects"
   if (section === "Projects") {
     return (
       <div className="space-y-4">
         {data.map((project, index) => (
-          <div key={index} className="p-4 bg-background rounded-lg border border-white/10">
+          <motion.div 
+            key={index} 
+            className="p-4 bg-background rounded-lg border border-white/10 transition-colors hover:bg-surface"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
             <h3 className="text-lg font-semibold text-primary">{project.title}</h3>
             <p className="text-muted mt-1">{project.description}</p>
             {project.link && (
@@ -23,24 +27,27 @@ const SectionContent = ({ section, data }) => {
                 View Project &rarr;
               </a>
             )}
-          </div>
+          </motion.div>
         ))}
       </div>
     );
   }
 
-  // Specific layout for "Skills" or "Relevant Coursework"
   if (section === "Skills" || section === "Relevant Coursework") {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         {Object.entries(data).map(([category, items], index) => (
           <div key={index}>
-            <h3 className="text-lg font-semibold text-primary mb-2">{category}</h3>
-            <div className="flex flex-wrap gap-2">
+            <h3 className="text-lg font-semibold text-primary mb-3">{category}</h3>
+            <div className="flex flex-wrap gap-3">
               {Array.isArray(items) && items.map((item, itemIndex) => (
-                <span key={itemIndex} className="px-3 py-1 bg-background text-muted rounded-full text-sm border border-white/10">
+                <motion.span 
+                  key={itemIndex} 
+                  className="px-4 py-2 bg-primary/10 text-primary rounded-full font-medium border border-primary/30"
+                  whileHover={{ scale: 1.05, backgroundColor: "rgba(167, 139, 250, 0.2)" }} // Using primary color with more opacity
+                >
                   {item}
-                </span>
+                </motion.span>
               ))}
             </div>
           </div>
@@ -49,22 +56,26 @@ const SectionContent = ({ section, data }) => {
     );
   }
   
-  // Layout for "Work Experience" or "Volunteer Work"
   if (section === "Work Experience" || section === "Volunteer Work") {
     return (
-      <ul className="space-y-6">
+      <ul className="space-y-4">
         {data.map((item, index) => (
-          <li key={index} className="border-l-2 border-primary pl-4">
+          <motion.li 
+            key={index} 
+            className="p-4 rounded-lg border border-transparent transition-colors hover:bg-surface hover:border-white/10"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
             <h3 className="text-lg font-semibold text-text">{item.title}</h3>
             <p className="text-sm text-muted">{item.role} ({item.duration})</p>
-            <p className="mt-2 text-text">{item.description}</p>
-          </li>
+            <p className="mt-2 text-text/90">{item.description}</p>
+          </motion.li>
         ))}
       </ul>
     );
   }
 
-  // Default layout for simple text or array of strings
+  // Default layout for simple text or array of strings (like Education)
   return (
     <div className="prose prose-invert max-w-none">
       {Array.isArray(data) ? 
