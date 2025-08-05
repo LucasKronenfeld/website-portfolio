@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { db } from "./firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
-import ProjectCard from "./components/projectCard";
-import Card from "./components/Card";
+import FeatureRow from "./components/FeatureRow";
 
 export default function Projects() {
   const [projectsData, setProjectsData] = useState(null);
@@ -40,7 +39,7 @@ export default function Projects() {
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen bg-background text-text"><div className="text-xl font-semibold">Loading Projects...</div></div>;
   }
-  
+
   return (
     <motion.div 
       className="min-h-screen bg-background pt-24"
@@ -49,9 +48,16 @@ export default function Projects() {
       transition={{ duration: 0.8 }}
     >
       <div className="container mx-auto px-6 py-12">
-        <motion.div className="text-center mb-12">
+        <motion.div 
+          className="text-center mb-12"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        >
           <h1 className="text-4xl md:text-5xl font-bold text-text mb-4">Projects</h1>
-          <p className="text-lg text-muted max-w-3xl mx-auto">Explore my projects, including computer science work, ongoing developments, and personal creations.</p>
+          <p className="text-lg text-muted max-w-3xl mx-auto">
+            Explore my projects, including computer science work, ongoing developments, and personal creations.
+          </p>
         </motion.div>
 
         <div className="flex justify-center border-b border-white/10 mb-8">
@@ -60,6 +66,7 @@ export default function Projects() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-6 py-3 font-semibold transition-colors relative text-lg ${activeTab === tab ? "text-text" : "text-muted hover:text-text"}`}
+              whileTap={{ scale: 0.95 }}
             >
               {tab}
               {activeTab === tab && <motion.div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-accent" layoutId="underline_projects" />}
@@ -67,27 +74,17 @@ export default function Projects() {
           ))}
         </div>
 
-        {/* --- DIAGNOSTIC VIEW --- */}
-        <pre className="text-white bg-surface p-4 rounded-lg my-4 text-xs overflow-auto">
-          {`LOADING: ${loading}\nACTIVE TAB: ${activeTab}\nPROJECTS DATA: ${JSON.stringify(projectsData, null, 2)}\n\nACTIVE PROJECTS: ${JSON.stringify(activeProjects, null, 2)}`}
-        </pre>
-        {/* --- END DIAGNOSTIC VIEW --- */}
-
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 auto-rows-[250px]"
+            className="space-y-16"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -20, opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
             {activeProjects && activeProjects.map((project, index) => (
-              activeTab === "In Progress" ? (
-                <Card key={`${activeTab}-card-${index}`} imageSrc={project.imageSrc} title={project.title} description={project.description} />
-              ) : (
-                <ProjectCard key={`${activeTab}-proj-${index}`} imageSrc={project.imageSrc} title={project.title} description={project.description} link={project.link} />
-              )
+              <FeatureRow key={`${activeTab}-${index}`} item={project} index={index} />
             ))}
           </motion.div>
         </AnimatePresence>
