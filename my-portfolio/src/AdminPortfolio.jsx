@@ -3,7 +3,18 @@ import { db } from './firebaseConfig';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 
 const initialPortfolioData = {
-    "Pixel": [], "2D": [], "Photography": []
+    "Pixel": [
+      { imageUrl: "/pixel/pixelPenguin.png", title: "Pixel Penguin", description: "A pixel art piece.", isFeatured: false },
+      { imageUrl: "/pixel/pixilPanda.png", title: "Pixel Panda", description: "A pixel art piece.", isFeatured: false },
+      { imageUrl: "/pixel/pixilOrchid.png", title: "Pixel Orchid", description: "A pixel art piece.", isFeatured: false },
+    ],
+    "2D": [
+      { imageUrl: "/TwoDArt/chase.jpg", title: "Lucas and Charles", description: "A 2D artwork.", isFeatured: false },
+      { imageUrl: "/TwoDArt/lucasLogoman.png", title: "Logoman", description: "A 2D artwork.", isFeatured: false },
+    ],
+    "Photography": [
+      { imageUrl: "/modernDeskWork.png", title: "Modern Desk Work", description: "A beautiful shot.", isFeatured: false },
+    ],
 };
 
 export default function AdminPortfolio() {
@@ -19,6 +30,14 @@ export default function AdminPortfolio() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists() && Object.keys(docSnap.data()).length > 0) {
           const data = docSnap.data();
+          // Ensure all items have the isFeatured flag
+          Object.keys(data).forEach(category => {
+            data[category].forEach(item => {
+              if (item.isFeatured === undefined) {
+                item.isFeatured = false;
+              }
+            });
+          });
           setPortfolioData(data);
           setActiveCategoryTab(Object.keys(data)[0]);
         } else {
@@ -75,7 +94,7 @@ export default function AdminPortfolio() {
 
   const handleAddItemToCategory = (cat) => {
     const data = { ...portfolioData };
-    data[cat] = [...data[cat], { imageUrl: "", title: "", description: "" }];
+    data[cat] = [...data[cat], { imageUrl: "", title: "", description: "", isFeatured: false }];
     setPortfolioData(data);
   };
   
@@ -130,7 +149,7 @@ export default function AdminPortfolio() {
                         <button type="button" onClick={() => handleRemoveItemFromCategory(activeCategoryTab, index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
                         <h4 className="font-semibold text-lg pr-8">{item.title || `Item ${index + 1}`}</h4>
                         {Object.keys(item).map(field => (
-                            <div key={field}>
+                           field !== 'isFeatured' && <div key={field}>
                                 <label className="capitalize text-sm font-medium text-text">{field}</label>
                                 <input value={item[field]} onChange={(e) => handleItemChange(activeCategoryTab, index, field, e.target.value)} placeholder={field} className="w-full p-2 border border-contrast rounded"/>
                             </div>

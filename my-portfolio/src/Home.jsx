@@ -2,71 +2,49 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { db } from "./firebaseConfig";
-import { collection, getDocs, limit, orderBy, query, doc, getDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import ProjectCard from "./components/projectCard";
+import Card from "./components/Card";
 
-// Helper component for scroll-triggered animations
-const AnimatedSection = ({ children, direction = 'up' }) => {
+const AnimatedSection = ({ children }) => {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"]
   });
-
-  const y = useTransform(scrollYProgress, [0, 1], [direction === 'up' ? 100 : -100, 0]);
+  const y = useTransform(scrollYProgress, [0, 1], [100, 0]);
   const opacity = useTransform(scrollYProgress, [0, 0.5], [0, 1]);
-
-  return (
-    <motion.div ref={ref} style={{ y, opacity }}>
-      {children}
-    </motion.div>
-  );
+  return <motion.div ref={ref} style={{ y, opacity }}>{children}</motion.div>;
 };
 
 const Home = () => {
   const [featuredProjects, setFeaturedProjects] = useState([]);
-  const [recentPosts, setRecentPosts] = useState([]);
-  const targetRef = useRef(null);
-  
-  const { scrollYProgress } = useScroll({
-    target: targetRef,
-    offset: ["start end", "end start"],
-  });
-
-  // 3D-like transformations for images
-  const rotateX1 = useTransform(scrollYProgress, [0, 0.5], [20, 0]);
-  const rotateY1 = useTransform(scrollYProgress, [0, 0.5], [-20, 0]);
-  const rotateX2 = useTransform(scrollYProgress, [0.5, 1], [0, -20]);
-  const rotateY2 = useTransform(scrollYProgress, [0.5, 1], [0, 20]);
-
+  const [featuredPortfolio, setFeaturedPortfolio] = useState([]);
 
   useEffect(() => {
-    const fetchFeaturedProjects = async () => {
+    const fetchFeatured = async () => {
       try {
-        const docSnap = await getDoc(doc(db, 'projects', 'data'));
-        if (docSnap.exists()) {
-          const csProjects = docSnap.data()['Computer Science'] || [];
-          setFeaturedProjects(csProjects.slice(0, 3));
+        const projectsSnap = await getDoc(doc(db, 'projects', 'data'));
+        if (projectsSnap.exists()) {
+          const featured = Object.values(projectsSnap.data()).flat().filter(p => p.isFeatured);
+          setFeaturedProjects(featured);
         }
-      } catch (error) { console.error("Error fetching projects:", error); }
-    };
 
-    const fetchRecentPosts = async () => {
-      try {
-        const postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(3));
-        const querySnapshot = await getDocs(postsQuery);
-        setRecentPosts(querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-      } catch (error) { console.error("Error fetching posts:", error); }
+        const portfolioSnap = await getDoc(doc(db, 'portfolio', 'data'));
+        if (portfolioSnap.exists()) {
+            const featured = Object.values(portfolioSnap.data()).flat().filter(p => p.isFeatured);
+            setFeaturedPortfolio(featured);
+        }
+      } catch (error) {
+        console.error("Error fetching featured content:", error);
+      }
     };
-
-    fetchFeaturedProjects();
-    fetchRecentPosts();
+    fetchFeatured();
   }, []);
 
   return (
-    <div className="bg-background text-text min-h-screen" ref={targetRef}>
-      {/* --- Hero Section --- */}
-      <div className="flex flex-col items-center justify-center text-center py-20 px-6 bg-accent rounded-b-3xl shadow-lg">
+    <div className="bg-background text-text min-h-screen">
+      <div className="flex flex-col items-center justify-center text-center py-24 px-6 bg-accent rounded-b-3xl shadow-lg">
         <motion.h1 className="text-4xl md:text-5xl font-bold mb-4" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
           Lucas Kronenfeld
         </motion.h1>
@@ -76,55 +54,38 @@ const Home = () => {
       </div>
 
       <div className="container mx-auto px-6 py-16 space-y-24">
-        
-        {/* --- Interactive Visuals Section --- */}
-        <div className="flex flex-col md:flex-row justify-around items-center gap-12 min-h-[30vh]">
-            <motion.div style={{ rotateX: rotateX1, rotateY: rotateY1, perspective: 1000 }}>
-                <img src="/deskWorks.svg" alt="Desk Works" className="w-48 h-48"/>
-            </motion.div>
-            <p className="max-w-md text-center text-lg md:text-xl">Blending technical expertise with creative expression.</p>
-            <motion.div style={{ rotateX: rotateX2, rotateY: rotateY2, perspective: 1000 }}>
-                <img src="/computerScreen.svg" alt="Computer Screen" className="w-48 h-48"/>
-            </motion.div>
-        </div>
-
-        {/* --- Featured Projects Section --- */}
-        <AnimatedSection direction="up">
-          <h2 className="text-3xl font-bold text-center mb-8">Featured Projects</h2>
+        <AnimatedSection>
+          <h2 className="text-3xl font-bold text-center mb-10">Featured Projects</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {featuredProjects.map((project, index) => (
-              <motion.div key={index} whileHover={{ scale: 1.05 }}>
+              <motion.div key={`proj-${index}`} whileHover={{ scale: 1.05 }}>
                  <ProjectCard {...project} />
               </motion.div>
             ))}
           </div>
-          <div className="text-center mt-8">
+          <div className="text-center mt-10">
             <Link to="/projects" className="px-6 py-3 bg-secondary text-white font-semibold rounded-lg hover:bg-darkback transition-colors">
               View All Projects
             </Link>
           </div>
         </AnimatedSection>
-
-        {/* --- Recent Blog Posts Section --- */}
-        <AnimatedSection direction="up">
-          <h2 className="text-3xl font-bold text-center mb-8">Recent Posts</h2>
-          <div className="space-y-6 max-w-3xl mx-auto">
-            {recentPosts.map(post => (
-              <motion.div key={post.id} className="bg-accent p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                <h3 className="text-xl font-semibold text-primary">{post.title}</h3>
-                <p className="text-sm text-text-secondary mb-2">{new Date(post.createdAt.toDate()).toLocaleDateString()}</p>
-                <p className="text-gray-400">{post.content.substring(0, 100)}...</p>
+        
+        <AnimatedSection>
+          <h2 className="text-3xl font-bold text-center mb-10">Featured Portfolio</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {featuredPortfolio.map((item, index) => (
+              <motion.div key={`port-${index}`} whileHover={{ scale: 1.05 }}>
+                 <Card {...item} />
               </motion.div>
             ))}
           </div>
-          <div className="text-center mt-8">
-            <Link to="/blog" className="px-6 py-3 bg-secondary text-white font-semibold rounded-lg hover:bg-darkback transition-colors">
-              Read The Blog
+          <div className="text-center mt-10">
+            <Link to="/portfolio" className="px-6 py-3 bg-secondary text-white font-semibold rounded-lg hover:bg-darkback transition-colors">
+              View All Portfolio Items
             </Link>
           </div>
         </AnimatedSection>
 
-        {/* --- Call to Action --- */}
         <AnimatedSection>
             <div className="text-center mt-20 py-12 bg-accent rounded-lg shadow-xl">
                 <h2 className="text-3xl font-bold mb-4">Let's Create Something Amazing</h2>

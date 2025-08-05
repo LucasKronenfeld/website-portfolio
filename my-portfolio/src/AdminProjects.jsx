@@ -3,8 +3,20 @@ import { db } from './firebaseConfig';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 
 const initialProjectsData = {
-    "Computer Science": [], "In Progress": [], "Personal": []
-};
+    "Computer Science": [
+      { imageSrc: "/Pixel_Logo.png", title: "Pixel Tees Store", description: "e-commerce website for selling tshirts. (payment system shut down)", link: "https://pixeltees.org", isFeatured: false },    
+      { imageSrc: "/modernDeskWork.png", title: "LucasKronenfeld.com", description: "design a website to highlight projects and skills", link: "https://lucaskronenfeld.com", isFeatured: false },
+      { imageSrc: "/Designer.jpeg", title: "Dentist Database creation", description: "design database and queries for a dentist office", link: "https://github.com/LucasKronenfeld/SQL-Project", isFeatured: false },
+    ],
+    "In Progress": [
+      { imageSrc: "/progressProject1.png", title: "In Progress 1", description: "A project currently in development", link: "", isFeatured: false },
+      { imageSrc: "/progressProject2.png", title: "In Progress 2", description: "Another work in progress", link: "", isFeatured: false },
+    ],
+    "Personal": [
+      { imageSrc: "/personalProject1.png", title: "Personal Project 1", description: "A personal passion project", link: "", isFeatured: false },
+      { imageSrc: "/personalProject2.png", title: "Personal Project 2", description: "Another personal project", link: "", isFeatured: false },
+    ],
+  };
 
 export default function AdminProjects() {
   const [projectsData, setProjectsData] = useState(null);
@@ -19,6 +31,14 @@ export default function AdminProjects() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists() && Object.keys(docSnap.data()).length > 0) {
           const data = docSnap.data();
+          // Ensure all items have the isFeatured flag
+          Object.keys(data).forEach(category => {
+            data[category].forEach(item => {
+              if (item.isFeatured === undefined) {
+                item.isFeatured = false;
+              }
+            });
+          });
           setProjectsData(data);
           setActiveCategoryTab(Object.keys(data)[0]);
         } else {
@@ -75,7 +95,7 @@ export default function AdminProjects() {
 
   const handleAddItemToCategory = (cat) => {
     const data = { ...projectsData };
-    data[cat] = [...data[cat], { imageSrc: "", title: "", description: "", link: "" }];
+    data[cat] = [...data[cat], { imageSrc: "", title: "", description: "", link: "", isFeatured: false }];
     setProjectsData(data);
   };
   
@@ -130,7 +150,7 @@ export default function AdminProjects() {
                         <button type="button" onClick={() => handleRemoveItemFromCategory(activeCategoryTab, index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
                         <h4 className="font-semibold text-lg pr-8">{item.title || `Item ${index + 1}`}</h4>
                         {Object.keys(item).map(field => (
-                            <div key={field}>
+                           field !== 'isFeatured' && <div key={field}>
                                 <label className="capitalize text-sm font-medium text-text">{field}</label>
                                 <input value={item[field]} onChange={(e) => handleItemChange(activeCategoryTab, index, field, e.target.value)} placeholder={field} className="w-full p-2 border border-contrast rounded"/>
                             </div>

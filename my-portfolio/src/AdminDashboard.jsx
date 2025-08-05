@@ -5,19 +5,20 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import AdminResume from './AdminResume';
 import AdminPortfolio from './AdminPortfolio';
 import AdminProjects from './AdminProjects';
-import AdminPosts from './AdminPosts'; // Import the new component
+import AdminPosts from './AdminPosts';
+import AdminFeatured from './AdminFeatured'; // Import the new component
 
-const sections = ['Posts', 'Resume', 'Portfolio', 'Projects'];
+const sections = ['Featured', 'Posts', 'Resume', 'Portfolio', 'Projects'];
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('Posts');
+  const [activeTab, setActiveTab] = useState('Featured');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
-        navigate('/admin'); // Redirect if not authenticated
+        navigate('/admin');
       }
     });
     return () => unsubscribe();
@@ -33,6 +34,8 @@ export default function AdminDashboard() {
   
   const renderActiveComponent = () => {
     switch (activeTab) {
+      case 'Featured':
+        return <AdminFeatured />;
       case 'Resume':
         return <AdminResume />;
       case 'Portfolio':
@@ -48,7 +51,6 @@ export default function AdminDashboard() {
   return (
     <div className="bg-background min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* --- Header --- */}
         <div className="flex justify-between items-center py-6 border-b border-contrast">
           <h1 className="text-3xl font-bold text-text">Admin Dashboard</h1>
           <div className="flex items-center gap-4">
@@ -64,7 +66,6 @@ export default function AdminDashboard() {
         
         {message && <p className="my-4 text-center p-3 bg-gray-200 rounded-md text-gray-800">{message}</p>}
 
-        {/* --- Top Tab Navigation --- */}
         <div className="border-b border-contrast">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             {sections.map(section => (
@@ -73,7 +74,7 @@ export default function AdminDashboard() {
                 onClick={() => setActiveTab(section)}
                 className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === section
-                    ? 'border-secondary text-primary'
+                    ? 'border-secondary text-white'
                     : 'border-transparent text-text hover:border-gray-300'
                 }`}
               >
@@ -83,7 +84,6 @@ export default function AdminDashboard() {
           </nav>
         </div>
         
-        {/* --- Content Area --- */}
         <div className="py-8">
           <div className="bg-accent p-6 rounded-lg shadow-inner">
             {renderActiveComponent()}
