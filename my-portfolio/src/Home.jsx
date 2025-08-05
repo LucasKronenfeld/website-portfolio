@@ -1,65 +1,93 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useFirestoreData } from './useFirestoreData';
+import { db } from './firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 import Hero from './components/Hero';
 import GridItem from './components/GridItem';
 
-// Standardizes data from different Firestore collections into a single format.
-const standardizeData = (items, categoryName, type) => {
-  if (!items) return [];
-  return items.map(item => ({
-    id: `${type}-${categoryName}-${item.title}`,
-    title: item.title,
-    image: item.imageUrl || item.imageSrc, // Handle both imageUrl and imageSrc
-    category: categoryName,
-    link: item.link || (type === 'portfolio' ? '/portfolio' : '/projects'),
-    description: item.description || '',
-    featured: item.featured || false,
-  }));
-};
-
 // Processes all data and filters for featured items.
-const processAllData = (portfolioData, projectsData) => {
+const processFetchedData = (portfolioData, projectsData) => {
   let combined = [];
 
-  for (const category in portfolioData) {
-    combined = combined.concat(standardizeData(portfolioData[category], category, 'portfolio'));
+  // Add featured portfolio items
+  if (portfolioData) {
+    for (const category in portfolioData) {
+      if (portfolioData[category]) {
+        portfolioData[category].forEach(item => {
+          if (item.featured) {
+            combined.push({
+              id: `portfolio-${category}-${item.title}`,
+              title: item.title,
+              image: item.imageUrl,
+              category: category,
+              link: `/portfolio`,
+            });
+          }
+        });
+      }
+    }
   }
 
-  for (const category in projectsData) {
-    combined = combined.concat(standardizeData(projectsData[category], category, 'projects'));
+  // Add featured project items
+  if (projectsData) {
+    for (const category in projectsData) {
+      if(projectsData[category]) {
+        projectsData[category].forEach(item => {
+          if (item.featured) {
+            combined.push({
+              id: `projects-${category}-${item.title}`,
+              title: item.title,
+              image: item.imageSrc,
+              category: category,
+              link: item.link || `/projects`,
+            });
+          }
+        });
+      }
+    }
   }
-
-  // Filter for items explicitly marked as featured.
-  const featured = combined.filter(item => item.featured);
 
   // Assign size property for the bento grid layout.
-  return featured.map((item, index) => ({
+  return combined.map((item, index) => ({
     ...item,
     size: index === 0 ? 'large' : 'default',
   }));
 };
 
+
 export default function Home() {
-  const { data: portfolioData, loading: portfolioLoading } = useFirestoreData('portfolio');
-  const { data: projectsData, loading: projectsLoading } = useFirestoreData('projects');
+  const [portfolioData, setPortfolioData] = useState(null);
+  const [projectsData, setProjectsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        const portfolioRef = doc(db, 'portfolio', 'data');
+        const projectsRef = doc(db, 'projects', 'data');
+        
+        const [portfolioSnap, projectsSnap] = await Promise.all([
+          getDoc(portfolioRef),
+          getDoc(projectsRef)
+        ]);
+
+        if (portfolioSnap.exists()) setPortfolioData(portfolioSnap.data());
+        if (projectsSnap.exists()) setProjectsData(projectsSnap.data());
+
+      } catch (error) {
+        console.error("Error fetching homepage data: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAllData();
+  }, []);
 
   const featuredContent = useMemo(() => {
-    if (portfolioLoading || projectsLoading) return [];
-    return processAllData(portfolioData, projectsData);
-  }, [portfolioData, projectsData, portfolioLoading, projectsLoading]);
+    return processFetchedData(portfolioData, projectsData);
+  }, [portfolioData, projectsData]);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
-
-  if (portfolioLoading || projectsLoading) {
+  if (loading) {
     return (
       <div className="bg-background text-text min-h-screen flex items-center justify-center">
         <p className="text-2xl">Loading amazing things...</p>
@@ -84,14 +112,14 @@ export default function Home() {
         
         {featuredContent.length > 0 ? (
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[300px]"
-            variants={containerVariants}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 auto-rows-[250px]"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
+            variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
           >
             {featuredContent.map(item => (
-              <motion.div key={item.id} variants={itemVariants}>
+              <motion.div key={item.id} variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                 <GridItem item={item} size={item.size} />
               </motion.div>
             ))}

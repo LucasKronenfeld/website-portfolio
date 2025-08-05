@@ -1,30 +1,46 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useFirestoreData } from "./useFirestoreData";
+import { db } from "./firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
 import ProjectCard from "./components/projectCard";
 import Card from "./components/Card";
 
 export default function Projects() {
-  const { data: projectsData, loading } = useFirestoreData('projects');
+  const [projectsData, setProjectsData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(null);
 
   useEffect(() => {
-    if (projectsData && !activeTab) {
-      setActiveTab(Object.keys(projectsData)[0]);
-    }
-  }, [projectsData, activeTab]);
+    const fetchProjectsData = async () => {
+      try {
+        const docRef = doc(db, 'projects', 'data');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setProjectsData(data);
+          if (Object.keys(data).length > 0) {
+            setActiveTab(Object.keys(data)[0]);
+          }
+        } else {
+          setProjectsData({});
+        }
+      } catch (error) {
+        console.error("Error fetching projects data: ", error);
+        setProjectsData({});
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjectsData();
+  }, []);
 
   const categories = projectsData ? Object.keys(projectsData) : [];
   const activeProjects = activeTab && projectsData ? projectsData[activeTab] : [];
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-background text-text">
-        <div className="text-xl font-semibold">Loading Projects...</div>
-      </div>
-    );
+    return <div className="flex justify-center items-center min-h-screen bg-background text-text"><div className="text-xl font-semibold">Loading Projects...</div></div>;
   }
-
+  
   return (
     <motion.div 
       className="min-h-screen bg-background pt-24"
@@ -33,16 +49,9 @@ export default function Projects() {
       transition={{ duration: 0.8 }}
     >
       <div className="container mx-auto px-6 py-12">
-        <motion.div 
-          className="text-center mb-12"
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6 }}
-        >
+        <motion.div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-text mb-4">Projects</h1>
-          <p className="text-lg text-muted max-w-3xl mx-auto">
-            Explore my projects, including computer science work, ongoing developments, and personal creations.
-          </p>
+          <p className="text-lg text-muted max-w-3xl mx-auto">Explore my projects, including computer science work, ongoing developments, and personal creations.</p>
         </motion.div>
 
         <div className="flex justify-center border-b border-white/10 mb-8">
@@ -51,15 +60,18 @@ export default function Projects() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-6 py-3 font-semibold transition-colors relative text-lg ${activeTab === tab ? "text-text" : "text-muted hover:text-text"}`}
-              whileTap={{ scale: 0.95 }}
             >
               {tab}
-              {activeTab === tab && (
-                <motion.div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-accent" layoutId="underline_projects" />
-              )}
+              {activeTab === tab && <motion.div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-accent" layoutId="underline_projects" />}
             </motion.button>
           ))}
         </div>
+
+        {/* --- DIAGNOSTIC VIEW --- */}
+        <pre className="text-white bg-surface p-4 rounded-lg my-4 text-xs overflow-auto">
+          {`LOADING: ${loading}\nACTIVE TAB: ${activeTab}\nPROJECTS DATA: ${JSON.stringify(projectsData, null, 2)}\n\nACTIVE PROJECTS: ${JSON.stringify(activeProjects, null, 2)}`}
+        </pre>
+        {/* --- END DIAGNOSTIC VIEW --- */}
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -70,7 +82,7 @@ export default function Projects() {
             exit={{ y: -20, opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            {activeProjects.map((project, index) => (
+            {activeProjects && activeProjects.map((project, index) => (
               activeTab === "In Progress" ? (
                 <Card key={`${activeTab}-card-${index}`} imageSrc={project.imageSrc} title={project.title} description={project.description} />
               ) : (
