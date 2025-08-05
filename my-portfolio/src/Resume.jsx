@@ -43,8 +43,8 @@ const SectionContent = ({ section, data }) => {
               {Array.isArray(items) && items.map((item, itemIndex) => (
                 <motion.span 
                   key={itemIndex} 
-                  className="px-4 py-2 bg-primary/10 text-primary rounded-full font-medium border border-primary/30"
-                  whileHover={{ scale: 1.05, backgroundColor: "rgba(167, 139, 250, 0.2)" }} // Using primary color with more opacity
+                  className="px-4 py-2 bg-primary/10 text-text rounded-full font-medium border border-primary/30"
+                  whileHover={{ scale: 1.05, backgroundColor: "rgba(167, 139, 250, 0.2)" }}
                 >
                   {item}
                 </motion.span>

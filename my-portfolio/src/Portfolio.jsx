@@ -1,37 +1,20 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { db } from "./firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { useFirestoreData } from "./useFirestoreData";
 import Card from "./components/Card";
 
 export default function Portfolio() {
-  const [portfolioData, setPortfolioData] = useState({});
-  const [loading, setLoading] = useState(true);
+  const { data: portfolioData, loading } = useFirestoreData('portfolio');
   const [activeTab, setActiveTab] = useState(null);
 
   useEffect(() => {
-    const fetchPortfolioData = async () => {
-      try {
-        const docRef = doc(db, 'portfolio', 'data');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists() && Object.keys(docSnap.data()).length > 0) {
-          const data = docSnap.data();
-          setPortfolioData(data);
-          setActiveTab(Object.keys(data)[0]);
-        } else {
-          console.log("No portfolio data found.");
-        }
-      } catch (error) {
-        console.error("Error fetching portfolio data: ", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPortfolioData();
-  }, []);
+    if (portfolioData && !activeTab) {
+      setActiveTab(Object.keys(portfolioData)[0]);
+    }
+  }, [portfolioData, activeTab]);
 
-  const categories = Object.keys(portfolioData);
-  const activeArtworks = activeTab ? portfolioData[activeTab] : [];
+  const categories = portfolioData ? Object.keys(portfolioData) : [];
+  const activeArtworks = activeTab && portfolioData ? portfolioData[activeTab] : [];
 
   if (loading) {
     return (
@@ -57,7 +40,7 @@ export default function Portfolio() {
         >
           <h1 className="text-4xl md:text-5xl font-bold text-text mb-4">Portfolio</h1>
           <p className="text-lg text-muted max-w-3xl mx-auto">
-            Welcome to my art portfolio! Here you’ll find a collection of my creative work, including pixel art, digital illustrations, and photography.
+            Welcome to my art portfolio! A collection of my creative work, including pixel art, digital illustrations, and photography.
           </p>
         </motion.div>
 
@@ -66,16 +49,12 @@ export default function Portfolio() {
             <motion.button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 font-semibold transition-colors relative text-lg
-                ${activeTab === tab ? "text-text" : "text-muted hover:text-text"}`}
+              className={`px-6 py-3 font-semibold transition-colors relative text-lg ${activeTab === tab ? "text-text" : "text-muted hover:text-text"}`}
               whileTap={{ scale: 0.95 }}
             >
               {tab}
               {activeTab === tab && (
-                <motion.div
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-accent"
-                  layoutId="underline"
-                />
+                <motion.div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-accent" layoutId="underline_portfolio" />
               )}
             </motion.button>
           ))}
@@ -84,14 +63,14 @@ export default function Portfolio() {
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 auto-rows-[250px]"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -20, opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
             {activeArtworks.map((art, index) => (
-              <Card key={index} imageSrc={art.imageUrl} title={art.title} description={art.description} />
+              <Card key={`${activeTab}-${index}`} imageSrc={art.imageUrl} title={art.title} description={art.description} />
             ))}
           </motion.div>
         </AnimatePresence>

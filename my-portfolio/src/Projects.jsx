@@ -1,38 +1,21 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { db } from "./firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { useFirestoreData } from "./useFirestoreData";
 import ProjectCard from "./components/projectCard";
-import Card from "./components/Card"; // Keep Card for "In Progress" projects if needed
+import Card from "./components/Card";
 
 export default function Projects() {
-  const [projectsData, setProjectsData] = useState({});
-  const [loading, setLoading] = useState(true);
+  const { data: projectsData, loading } = useFirestoreData('projects');
   const [activeTab, setActiveTab] = useState(null);
 
   useEffect(() => {
-    const fetchProjectsData = async () => {
-      try {
-        const docRef = doc(db, 'projects', 'data');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists() && Object.keys(docSnap.data()).length > 0) {
-          const data = docSnap.data();
-          setProjectsData(data);
-          setActiveTab(Object.keys(data)[0]);
-        } else {
-          console.log("No projects data found.");
-        }
-      } catch (error) {
-        console.error("Error fetching projects data: ", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProjectsData();
-  }, []);
+    if (projectsData && !activeTab) {
+      setActiveTab(Object.keys(projectsData)[0]);
+    }
+  }, [projectsData, activeTab]);
 
-  const categories = Object.keys(projectsData);
-  const activeProjects = activeTab ? projectsData[activeTab] : [];
+  const categories = projectsData ? Object.keys(projectsData) : [];
+  const activeProjects = activeTab && projectsData ? projectsData[activeTab] : [];
 
   if (loading) {
     return (
@@ -58,7 +41,7 @@ export default function Projects() {
         >
           <h1 className="text-4xl md:text-5xl font-bold text-text mb-4">Projects</h1>
           <p className="text-lg text-muted max-w-3xl mx-auto">
-            Explore my projects, including computer science work, ongoing developments, and personal creations. Click "Inspect" to view more details.
+            Explore my projects, including computer science work, ongoing developments, and personal creations.
           </p>
         </motion.div>
 
@@ -67,16 +50,12 @@ export default function Projects() {
             <motion.button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 font-semibold transition-colors relative text-lg
-                ${activeTab === tab ? "text-text" : "text-muted hover:text-text"}`}
+              className={`px-6 py-3 font-semibold transition-colors relative text-lg ${activeTab === tab ? "text-text" : "text-muted hover:text-text"}`}
               whileTap={{ scale: 0.95 }}
             >
               {tab}
               {activeTab === tab && (
-                <motion.div
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-accent"
-                  layoutId="underline"
-                />
+                <motion.div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-accent" layoutId="underline_projects" />
               )}
             </motion.button>
           ))}
@@ -85,7 +64,7 @@ export default function Projects() {
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 auto-rows-[250px]"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -20, opacity: 0 }}
@@ -93,9 +72,9 @@ export default function Projects() {
           >
             {activeProjects.map((project, index) => (
               activeTab === "In Progress" ? (
-                <Card key={index} imageSrc={project.imageSrc} title={project.title} description={project.description} />
+                <Card key={`${activeTab}-card-${index}`} imageSrc={project.imageSrc} title={project.title} description={project.description} />
               ) : (
-                <ProjectCard key={index} imageSrc={project.imageSrc} title={project.title} description={project.description} link={project.link} />
+                <ProjectCard key={`${activeTab}-proj-${index}`} imageSrc={project.imageSrc} title={project.title} description={project.description} link={project.link} />
               )
             ))}
           </motion.div>
