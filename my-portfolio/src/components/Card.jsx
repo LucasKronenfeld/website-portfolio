@@ -7,53 +7,59 @@ const Card = ({ imageSrc, title, description }) => {
 
   return (
     <>
-      <div className="bg-background rounded-2xl shadow-lg overflow-hidden flex flex-col h-full">
-        {/* Image with Rounded Corners */}
-        <img src={imageSrc} alt={title} className="w-full h-48 object-cover rounded-t-2xl" />
+      <div className="bg-surface rounded-2xl shadow-lg overflow-hidden flex flex-col h-full border border-white/10">
+        {/* Image */}
+        <div className="w-full h-48 overflow-hidden">
+          <img src={imageSrc} alt={title} className="w-full h-full object-cover" />
+        </div>
 
         {/* Content */}
-        <div className="p-4 flex-grow overflow-visible">
+        <div className="p-4 flex-grow">
           <h3 className="text-xl font-semibold text-text">{title}</h3>
-          <p className="text-contrast mt-2">{description}</p>
+          <p className="text-muted mt-2">{description}</p>
+        </div>
 
-          {/* Button */}
+        {/* Button */}
+        <div className="p-4 pt-0">
           <button
             onClick={() => setIsOpen(true)}
-            className="mt-4 px-4 py-2 bg-secondary text-white rounded-lg hover:bg-contrast transition"
+            className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-80 transition-all"
           >
             View
           </button>
         </div>
       </div>
 
-      {/* Modal with Animation */}
+      {/* Modal Portal */}
       {createPortal(
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-md z-[1000] pointer-events-auto"
+              className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md z-[1000]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
             >
               <motion.div
-                className="bg-white p-4 rounded-lg shadow-lg relative max-w-lg"
-                initial={{ scale: 0.8, opacity: 0 }}
+                className="bg-surface p-4 rounded-lg shadow-2xl relative max-w-3xl w-full border border-white/10"
+                initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
               >
                 {/* Close Button */}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="absolute top-2 right-2 text-text font-bold text-lg"
+                  className="absolute top-3 right-3 text-muted hover:text-text transition-colors z-10"
                 >
-                  ✕
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
 
-                {/* Modal Image with Rounded Corners */}
-                <img src={imageSrc} alt={title} className="max-w-full max-h-[80vh] rounded-lg" />
+                {/* Modal Image */}
+                <div className="overflow-hidden rounded-lg">
+                  <img src={imageSrc} alt={title} className="w-full h-auto max-h-[85vh] object-contain" />
+                </div>
               </motion.div>
             </motion.div>
           )}

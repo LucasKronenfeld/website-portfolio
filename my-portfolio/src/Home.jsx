@@ -1,45 +1,45 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useFirestoreData } from '../useFirestoreData';
-import Hero from '../components/Hero';
-import GridItem from '../components/GridItem';
+import { useFirestoreData } from './useFirestoreData';
+import Hero from './components/Hero';
+import GridItem from './components/GridItem';
 
 // Helper function to process and combine data
 const processFetchedData = (portfolioData, projectsData) => {
   const combined = [];
 
-  // Add portfolio items
+  // Add featured portfolio items
   for (const category in portfolioData) {
     portfolioData[category].forEach(item => {
-      combined.push({
-        id: `${category}-${item.title}`,
-        title: item.title,
-        image: item.imageUrl,
-        category: category,
-        link: `/portfolio`, // Or a more specific link if available
-      });
+      if (item.featured) {
+        combined.push({
+          id: `${category}-${item.title}`,
+          title: item.title,
+          image: item.imageUrl,
+          category: category,
+          link: `/portfolio`,
+        });
+      }
     });
   }
 
-  // Add project items
+  // Add featured project items
   for (const category in projectsData) {
     projectsData[category].forEach(item => {
-      combined.push({
-        id: `${category}-${item.title}`,
-        title: item.title,
-        image: item.imageSrc,
-        category: category,
-        link: item.link || `/projects`,
-      });
+      if (item.featured) {
+        combined.push({
+          id: `${category}-${item.title}`,
+          title: item.title,
+          image: item.imageSrc,
+          category: category,
+          link: item.link || `/projects`,
+        });
+      }
     });
   }
 
-  // Shuffle and select featured items
-  const shuffled = combined.sort(() => 0.5 - Math.random());
-  const featured = shuffled.slice(0, 5);
-
-  // Assign size property
-  return featured.map((item, index) => ({
+  // Assign size property to the first item
+  return combined.map((item, index) => ({
     ...item,
     size: index === 0 ? 'large' : 'default',
   }));
@@ -83,7 +83,7 @@ export default function Home() {
       
       <div className="container mx-auto px-6 py-24" id="featured-work">
         <motion.h2 
-          className="text-4xl font-bold text-center mb-12"
+          className="text-4xl font-bold text-center mb-12 text-text"
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
