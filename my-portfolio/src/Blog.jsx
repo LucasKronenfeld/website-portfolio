@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from './firebaseConfig';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 // --- Modal Component ---
 const PostModal = ({ post, onClose }) => {
@@ -9,32 +10,32 @@ const PostModal = ({ post, onClose }) => {
 
   return (
     <motion.div 
-      className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
+      className="fixed inset-0 bg-black/70 backdrop-blur-md flex justify-center items-center z-[1000] p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
     >
       <motion.div 
-        className="bg-white p-8 rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-surface p-8 rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/10 relative"
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 50, opacity: 0 }}
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-3xl font-bold mb-4">{post.title}</h2>
-        <p className="text-sm text-gray-500 mb-6">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-muted hover:text-text transition-colors z-10 p-1 bg-surface/50 rounded-full"
+        >
+          <XMarkIcon className="w-6 h-6" />
+        </button>
+        <h2 className="text-3xl font-bold text-text mb-2 pr-8">{post.title}</h2>
+        <p className="text-sm text-muted mb-6">
           Published on: {new Date(post.createdAt.toDate()).toLocaleDateString()}
         </p>
-        <div className="text-gray-800 whitespace-pre-wrap">
+        <div className="prose prose-invert max-w-none text-text whitespace-pre-wrap">
           {post.content}
         </div>
-        <button 
-          onClick={onClose} 
-          className="mt-8 px-4 py-2 bg-secondary text-white rounded hover:bg-darkback"
-        >
-          Close
-        </button>
       </motion.div>
     </motion.div>
   );
@@ -44,22 +45,21 @@ const PostModal = ({ post, onClose }) => {
 export default function Blog() {
   const [posts, setPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         const postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(postsQuery);
-        const postsData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setPosts(postsData);
       } catch (error) {
         console.error("Error fetching posts: ", error);
+      } finally {
+        setLoading(false);
       }
     };
-
     fetchPosts();
   }, []);
 
@@ -68,67 +68,68 @@ export default function Blog() {
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-    },
+    visible: { y: 0, opacity: 1 },
   };
+  
+  if (loading) {
+    return <div className="min-h-screen bg-background flex items-center justify-center text-text">Loading Blog...</div>;
+  }
 
   return (
-    <motion.div
-        className="container mx-auto px-4 py-8"
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-    >
-        <motion.h1 
-            className="text-4xl font-bold text-center mb-12 text-text"
-            variants={itemVariants}
+    <div className="min-h-screen bg-background text-text pt-24">
+      <div className="container mx-auto px-6 py-12">
+        <motion.div 
+          className="text-center mb-12"
+          initial="hidden"
+          animate="visible"
+          variants={itemVariants}
         >
-            Blog Posts
-        </motion.h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-text mb-4">Blog</h1>
+          <p className="text-lg text-muted max-w-3xl mx-auto">
+            Thoughts, stories, and updates from my journey in web development and design.
+          </p>
+        </motion.div>
 
         <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            variants={containerVariants}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
         >
-            {posts.map((post) => (
+          {posts.map((post) => (
             <motion.div 
-                key={post.id} 
-                className="bg-white rounded-lg shadow-lg p-6 flex flex-col hover:shadow-xl transition-shadow"
-                variants={itemVariants}
-                whileHover={{ scale: 1.03 }}
+              key={post.id} 
+              className="bg-surface rounded-lg shadow-lg p-6 flex flex-col border border-white/10"
+              variants={itemVariants}
             >
-                <h2 className="text-2xl font-semibold text-primary mb-2">{post.title}</h2>
-                {post.createdAt?.toDate && (
-                <p className="text-sm text-text-secondary mb-4">
-                    Published on: {new Date(post.createdAt.toDate()).toLocaleDateString()}
+              <h2 className="text-2xl font-semibold text-text mb-2">{post.title}</h2>
+              {post.createdAt?.toDate && (
+                <p className="text-sm text-muted mb-4">
+                  {new Date(post.createdAt.toDate()).toLocaleDateString()}
                 </p>
-                )}
-                <p className="text-gray-700 flex-grow">
+              )}
+              <p className="text-muted flex-grow">
                 {post.content.substring(0, 150)}{post.content.length > 150 ? "..." : ""}
-                </p>
-                <button 
+              </p>
+              <button 
                 onClick={() => openModal(post)}
-                className="mt-4 px-4 py-2 bg-primary text-white self-start rounded hover:bg-secondary transition-colors"
-                >
+                className="mt-4 px-4 py-2 bg-primary text-white self-start rounded-lg hover:bg-opacity-90 transition-colors"
+              >
                 Read More
-                </button>
+              </button>
             </motion.div>
-            ))}
+          ))}
         </motion.div>
         
-        {selectedPost && <PostModal post={selectedPost} onClose={closeModal} />}
-    </motion.div>
+        <AnimatePresence>
+          {selectedPost && <PostModal post={selectedPost} onClose={closeModal} />}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 }

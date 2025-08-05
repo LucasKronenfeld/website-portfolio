@@ -4,42 +4,37 @@ import { useFirestoreData } from './useFirestoreData';
 import Hero from './components/Hero';
 import GridItem from './components/GridItem';
 
-// Helper function to process and combine data
-const processFetchedData = (portfolioData, projectsData) => {
-  const combined = [];
+// Standardizes data from different Firestore collections into a single format.
+const standardizeData = (items, categoryName, type) => {
+  if (!items) return [];
+  return items.map(item => ({
+    id: `${type}-${categoryName}-${item.title}`,
+    title: item.title,
+    image: item.imageUrl || item.imageSrc, // Handle both imageUrl and imageSrc
+    category: categoryName,
+    link: item.link || (type === 'portfolio' ? '/portfolio' : '/projects'),
+    description: item.description || '',
+    featured: item.featured || false,
+  }));
+};
 
-  // Add featured portfolio items
+// Processes all data and filters for featured items.
+const processAllData = (portfolioData, projectsData) => {
+  let combined = [];
+
   for (const category in portfolioData) {
-    portfolioData[category].forEach(item => {
-      if (item.featured) { // Correctly filter for 'featured'
-        combined.push({
-          id: `${category}-${item.title}`,
-          title: item.title,
-          image: item.imageUrl,
-          category: category,
-          link: `/portfolio`,
-        });
-      }
-    });
+    combined = combined.concat(standardizeData(portfolioData[category], category, 'portfolio'));
   }
 
-  // Add featured project items
   for (const category in projectsData) {
-    projectsData[category].forEach(item => {
-      if (item.featured) { // Correctly filter for 'featured'
-        combined.push({
-          id: `${category}-${item.title}`,
-          title: item.title,
-          image: item.imageSrc,
-          category: category,
-          link: item.link || `/projects`,
-        });
-      }
-    });
+    combined = combined.concat(standardizeData(projectsData[category], category, 'projects'));
   }
 
-  // Assign size property to the first item
-  return combined.map((item, index) => ({
+  // Filter for items explicitly marked as featured.
+  const featured = combined.filter(item => item.featured);
+
+  // Assign size property for the bento grid layout.
+  return featured.map((item, index) => ({
     ...item,
     size: index === 0 ? 'large' : 'default',
   }));
@@ -51,17 +46,12 @@ export default function Home() {
 
   const featuredContent = useMemo(() => {
     if (portfolioLoading || projectsLoading) return [];
-    return processFetchedData(portfolioData, projectsData);
+    return processAllData(portfolioData, projectsData);
   }, [portfolioData, projectsData, portfolioLoading, projectsLoading]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
   const itemVariants = {
@@ -107,8 +97,9 @@ export default function Home() {
             ))}
           </motion.div>
         ) : (
-          <div className="text-center text-muted">
-            <p>No featured items yet. Visit the admin dashboard to select some!</p>
+          <div className="text-center text-muted py-8">
+            <p className="text-lg">No featured items to display at the moment.</p>
+            <p className="text-sm">You can select items to feature from the Admin Dashboard.</p>
           </div>
         )}
       </div>

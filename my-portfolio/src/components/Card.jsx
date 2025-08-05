@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 const Card = ({ imageSrc, title, description }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -8,18 +9,13 @@ const Card = ({ imageSrc, title, description }) => {
   return (
     <>
       <div className="bg-surface rounded-2xl shadow-lg overflow-hidden flex flex-col h-full border border-white/10">
-        {/* Image */}
         <div className="w-full h-48 overflow-hidden">
           <img src={imageSrc} alt={title} className="w-full h-full object-cover" />
         </div>
-
-        {/* Content */}
         <div className="p-4 flex-grow">
           <h3 className="text-xl font-semibold text-text">{title}</h3>
           <p className="text-muted mt-2">{description}</p>
         </div>
-
-        {/* Button */}
         <div className="p-4 pt-0">
           <button
             onClick={() => setIsOpen(true)}
@@ -30,35 +26,32 @@ const Card = ({ imageSrc, title, description }) => {
         </div>
       </div>
 
-      {/* Modal Portal */}
       {createPortal(
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md z-[1000]"
+              className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md z-[1000] p-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
             >
               <motion.div
                 className="bg-surface p-4 rounded-lg shadow-2xl relative max-w-3xl w-full border border-white/10"
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
               >
-                {/* Close Button */}
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="absolute top-3 right-3 text-muted hover:text-text transition-colors z-10"
+                  className="absolute top-3 right-3 text-muted hover:text-text transition-colors z-10 p-1 bg-surface/50 rounded-full"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <XMarkIcon className="w-6 h-6" />
                 </button>
 
-                {/* Modal Image */}
-                <div className="overflow-hidden rounded-lg">
-                  <img src={imageSrc} alt={title} className="w-full h-auto max-h-[85vh] object-contain" />
+                <div className="overflow-hidden rounded-lg mt-8">
+                  <img src={imageSrc} alt={title} className="w-full h-auto max-h-[80vh] object-contain" />
                 </div>
               </motion.div>
             </motion.div>
