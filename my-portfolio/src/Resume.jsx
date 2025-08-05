@@ -1,76 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { db } from "./firebaseConfig";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 
 const sections = [
   "Full Resume", "Summary", "Work Experience", "Projects", "Skills", "Education", "Relevant Coursework", "Volunteer Work"
 ];
-
-const initialResumeData = {
-    "Summary": "Highly motivated Computer Engineering student with a strong academic record and hands-on experience in IT support, management, and sales. Proven ability to lead teams, solve complex technical problems, and drive customer satisfaction. Seeking opportunities to leverage technical skills and leadership experience in a challenging engineering role.",
-  
-  "Work Experience": [
-    { title: "Ohio State Athletics Dept.", role: "IT Helpdesk Technical Support Specialist", duration: "September 2023 - Present", description: "Troubleshoot and resolve software and hardware issues for professional coaches. Manage technology for live broadcasts during football and basketball games, ensuring seamless operations. Gained hands-on experience with CrowdStrike and various Microsoft products at a commercial level." },
-    { title: "Solon Recreation Camp", role: "Camp Director", duration: "June 2024 - August 2024", description: "Directed a team of 70 counselors, managed activities for 450 campers. Implemented discipline strategies to reduce camper incidents." },
-    { title: "Home Depot", role: "Sales Associate", duration: "May 2022 - June 2024", description: "Achieved sales targets, contributing to a revenue increase. Enhanced customer experience through expert product knowledge." },
-    { title: "Birdigo and Elle Restaurant", role: "Food Service Associate", duration: "August 2021 - August 2022", description: "Managed point-of-sale systems and improved customer satisfaction scores through effective issue resolution." },
-    { title: "Everything Lacrosse", role: "Founder and Manager", duration: "June 2021 - August 2021", description: "Launched and managed a successful lacrosse camp with a 100% satisfaction rate. Recruited and trained a team of coaches." },
-    { title: "Backyard Camp", role: "Founder and Manager", duration: "June 2020 - August 2020", description: "Successfully launched a summer camp during COVID-19 with over 20 signups. Managed 5 counselors, created a safe and engaging environment." },
-  ],
-
-  "Projects": [
-    { title: "Portfolio Website", description: "Personal portfolio showcasing skills and projects.", link: "https://github.com/LucasKronenfeld/website-portfolio" },
-    { title: "Dentist Database creation", description: "design database and queries for a dentist office", link: "https://github.com/LucasKronenfeld/SQL-Project" },
-    { title: "Pixel Tees Store", description: "E-commerce website for selling t-shirts. (payment system shut down).", link: "https://pixeltees.org" },
-
-  ],
-
-  "Skills": {
-    "Programming Languages": ["Assembly", "Python", "C", "C++", "Java", "JavaScript", "HTML", "CSS", "MATLAB", "Swift"],
-    "Web Development": ["HTML", "JavaScript", "CSS", "Web App Development", "React", "Vite", "Tailwind CSS"],
-    "Software": ["XCode", "Microsoft Office Suite", "Eclipse", "Visual Studio Code"],
-    "Databases": ["SQL", "Database Design"],
-    "Creative": ["2D Art", "Digital Design"],
-    "Testing & Tools": ["J-Unit Testing", "MATLAB", "CrowdStrike", "Microsoft Office Suite"],
-    "Networking": ["Network Design", "Troubleshooting"]
-  },
-
-  "Education": [
-    "The Ohio State University (Computer Engineering, Honors Program, GPA: 3.97, Expected Graduation: December 2025)",
-    "Solon High School (Graduated 2022, GPA: 4.45, National Honors Society)"
-  ],
-
-  "Relevant Coursework": {
-    "Software Engineering": ["Software I", "Software II", "Web App Development", "Discrete Math", "Principal of Programming Languages", "Intro to AI"],
-    "Architecture": ["Systems I", "Systems II", "Analog Systems and Circuit Design", "Digital Logic"],
-    "Networking & Databases": ["Computer Networking", "Database Systems"],
-    "Engineering": ["Fundamental Engineering (Honors)", "Statistics", "Calculus", "Software Engineering", "Computer Engineering Ethics"],
-    "Communication and Buissness": ["Entrepreneurship", "Communication technology", "Persuasive Communication", "Violence in Media", "Media and Citizenship", "Introduction to Humanities"],
-    "Creative Design": ["2D Design"],
-  },
-
-  "Volunteer Work": [
-    { title: "Solon Laccrose", role: "Head/Assistant Coach", duration: "2021 - 2024", description: "Volunteered to help coach a few teams in my free time" },
-    { title: "Solon Recreation Center", role: "Head Coach", duration: "2018 - 2022", description: "Led teams to several league championships." },
-    { title: "Solon High School", role: "Peer Tutor", duration: "2021 - 2022", description: "Tutored peers, improving grades by an average of 10%." }
-  ]
-};
-
-// Function to upload initial data to Firestore
-const uploadInitialData = async () => {
-  try {
-    const docRef = doc(db, 'resume', 'data');
-    await setDoc(docRef, initialResumeData);
-    console.log('Initial resume data uploaded successfully!');
-  } catch (error) {
-    console.error('Error uploading initial resume data:', error);
-  }
-};
-
-// Call this function once to upload the data
-// uploadInitialData();
-
 
 export default function Resume() {
   const [activeSection, setActiveSection] = useState("Full Resume");
@@ -85,14 +20,12 @@ export default function Resume() {
         if (docSnap.exists()) {
           setResumeData(docSnap.data());
         } else {
-          // If no data in Firestore, use initial data and upload it
-          setResumeData(initialResumeData);
-          uploadInitialData();
+          console.log("No resume data found in the database. Please visit the admin dashboard to set it up.");
+          // You could set some default empty state here if you want.
+          setResumeData({});
         }
       } catch (error) {
         console.error("Error fetching resume data: ", error);
-        // Fallback to initial data if there's an error
-        setResumeData(initialResumeData);
       } finally {
         setLoading(false);
       }
@@ -142,11 +75,11 @@ export default function Resume() {
                 transition={{ duration: 0.5, delay: 0.1 }}
               >
                 <h2 className="text-xl font-bold mb-2">{section}</h2>
-                {section === "Skills" || section === "Relevant Coursework" ? (
+                {resumeData[section] && (section === "Skills" || section === "Relevant Coursework") ? (
                   Object.entries(resumeData[section]).map(([category, items], index) => (
                     <div key={index} className="mb-4">
                       <h3 className="text-lg font-semibold mb-1">{category}</h3>
-                      <p>{items.join(", ")}</p>
+                      <p>{Array.isArray(items) ? items.join(", ") : items}</p>
                     </div>
                   ))
                 ) : Array.isArray(resumeData[section]) ? (
@@ -173,7 +106,7 @@ export default function Resume() {
           </div>
         ) : activeSection === "Projects" ? (
           <div className="space-y-6">
-            {resumeData["Projects"].map((project, index) => (
+            {resumeData["Projects"] && resumeData["Projects"].map((project, index) => (
               <motion.div
                 key={index}
                 className="p-4 bg-gray-100 rounded-lg shadow-md hover:bg-secondary"
@@ -207,7 +140,7 @@ export default function Resume() {
           </motion.div>
         ) : activeSection === "Work Experience" || activeSection === "Volunteer Work" ? (
           <div className="space-y-6">
-            {resumeData[activeSection].map((job, index) => (
+            {resumeData[activeSection] && resumeData[activeSection].map((job, index) => (
               <motion.div
                 key={index}
                 className="p-4 bg-gray-100 rounded-lg shadow-md hover:bg-secondary"
@@ -223,8 +156,10 @@ export default function Resume() {
           </div>
         ) : activeSection === "Education" ? (
           <div className="space-y-6">
-            {resumeData["Education"].map((education, index) => {
-              const [school, details] = education.split(" (");
+            {resumeData["Education"] && resumeData["Education"].map((education, index) => {
+              const parts = education.split(" (");
+              const school = parts[0];
+              const details = parts.length > 1 ? `(${parts[1]}` : "";
               return (
                 <motion.div
                   key={index}
@@ -234,14 +169,14 @@ export default function Resume() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
                   <h2 className="text-xl font-bold text-text">{school}</h2>
-                  <p className="text-gray-700 mt-1">({details}</p>
+                  {details && <p className="text-gray-700 mt-1">{details}</p>}
                 </motion.div>
               );
             })}
           </div>
         ) : activeSection === "Skills" || activeSection === "Relevant Coursework" ? (
           <div>
-            {Object.entries(resumeData[activeSection]).map(([category, items], index) => (
+            {resumeData[activeSection] && Object.entries(resumeData[activeSection]).map(([category, items], index) => (
               <motion.div
                 key={index}
                 className="mb-4"
@@ -251,7 +186,7 @@ export default function Resume() {
               >
                 <h2 className="text-xl font-semibold mb-2">{category}</h2>
                 <div className="flex flex-wrap gap-2">
-                  {items.map((item, itemIndex) => (
+                  {Array.isArray(items) && items.map((item, itemIndex) => (
                     <span key={itemIndex} className="px-4 py-2 bg-gray-100 rounded-lg shadow-md transition duration-200 hover:bg-secondary text-black">
                       {item}
                     </span>
