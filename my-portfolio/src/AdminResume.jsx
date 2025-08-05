@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from './firebaseConfig';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { motion } from 'framer-motion';
 
 const initialResumeData = {
     "Summary": "Please add a summary.",
@@ -11,6 +12,7 @@ export default function AdminResume() {
   const [resumeData, setResumeData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [activeSection, setActiveSection] = useState('Summary');
 
   // --- Data Fetching Effect ---
   useEffect(() => {
@@ -123,59 +125,48 @@ export default function AdminResume() {
     setResumeData(prev => ({...prev, [section]: data}));
   };
 
+  const renderSectionEditor = () => {
+    const section = activeSection;
+    const data = resumeData[section];
 
-  if (loading) return <div>Loading Resume Editor...</div>;
-  if (!resumeData) return <div className="text-red-500">Error: Resume data could not be loaded.</div>;
-
-  return (
-    <form onSubmit={handleUpdate} className="space-y-8 bg-accent p-6 rounded-lg shadow-inner">
-      <div className="flex justify-between items-center">
-        <h3 className="text-2xl font-bold text-text">Edit Resume</h3>
-        <button className="px-6 py-3 bg-secondary text-white font-bold rounded-lg hover:bg-darkback transition-colors" type="submit">
-          Save All Changes
-        </button>
-      </div>
-      {message && <p className="text-center p-3 bg-gray-200 rounded-md text-gray-800">{message}</p>}
-      
-      {/* --- Summary --- */}
-      <div className="space-y-2">
-        <label className="text-xl font-semibold text-text">Summary</label>
-        <textarea name="Summary" value={resumeData.Summary} onChange={handleChange} className="w-full p-3 border border-contrast rounded-md h-32"/>
-      </div>
-      
-      {/* --- Mappable Sections --- */}
-      {Object.entries(resumeData).map(([section, data]) => {
-        if (section === 'Summary') return null;
-
-        if (Array.isArray(data)) { // Work Experience, Projects, Education, Volunteer Work
-          const isObjectArray = data.length > 0 && typeof data[0] === 'object';
-          const newItem = isObjectArray ? { title: "", role: "", duration: "", description: "" } : "";
-          
-          return (
-            <div key={section} className="space-y-4 p-4 border border-contrast rounded-lg">
-              <h4 className="text-xl font-semibold text-text">{section}</h4>
-              {data.map((item, index) => (
-                <div key={index} className="p-4 bg-background rounded-md space-y-3 relative">
-                   <button type="button" onClick={() => handleRemoveItem(section, index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
-                  {isObjectArray ? (
-                    Object.keys(item).map(key => (
-                      <div key={key}>
-                        <label className="capitalize text-sm font-medium">{key}</label>
-                        <input name={`${section}.${index}.${key}`} value={item[key]} onChange={handleChange} placeholder={key} className="w-full p-2 border border-contrast rounded"/>
-                      </div>
-                    ))
-                  ) : (
-                     <input name={`${section}.${index}`} value={item} onChange={handleChange} placeholder="Value" className="w-full p-2 border border-contrast rounded"/>
-                  )}
-                </div>
-              ))}
-              <button type="button" onClick={() => handleAddItem(section, newItem)} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add New {section}</button>
+    if (section === 'Summary') {
+        return (
+            <div className="space-y-2">
+                <label className="text-xl font-semibold text-text">Summary</label>
+                <textarea name="Summary" value={resumeData.Summary} onChange={handleChange} className="w-full p-3 border border-contrast rounded-md h-48"/>
             </div>
-          );
-        } else { // Skills, Relevant Coursework
-          return (
-            <div key={section} className="space-y-4 p-4 border border-contrast rounded-lg">
-                <h4 className="text-xl font-semibold text-text">{section}</h4>
+        )
+    }
+
+    if (Array.isArray(data)) { // For Work Experience, Projects, Education, Volunteer Work
+      const isObjectArray = data.length > 0 && typeof data[0] === 'object';
+      const newItem = isObjectArray ? { title: "", role: "", duration: "", description: "" } : "";
+      
+      return (
+        <div className="space-y-4">
+          {data.map((item, index) => (
+            <div key={index} className="p-4 bg-background rounded-md space-y-3 relative">
+               <button type="button" onClick={() => handleRemoveItem(section, index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
+              {isObjectArray ? (
+                Object.keys(item).map(key => (
+                  <div key={key}>
+                    <label className="capitalize text-sm font-medium">{key}</label>
+                    <input name={`${section}.${index}.${key}`} value={item[key]} onChange={handleChange} placeholder={key} className="w-full p-2 border border-contrast rounded"/>
+                  </div>
+                ))
+              ) : (
+                 <input name={`${section}.${index}`} value={item} onChange={handleChange} placeholder="Value" className="w-full p-2 border border-contrast rounded"/>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={() => handleAddItem(section, newItem)} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add New {section}</button>
+        </div>
+      );
+    } 
+
+    if (typeof data === 'object') { // For Skills, Relevant Coursework
+        return (
+            <div className="space-y-4">
                 {Object.entries(data).map(([cat, items]) => (
                     <div key={cat} className="p-4 bg-background rounded-md space-y-3">
                         <div className="flex items-center gap-2">
@@ -193,9 +184,56 @@ export default function AdminResume() {
                 ))}
                 <button type="button" onClick={() => handleAddCategory(section)} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add New Category to {section}</button>
             </div>
-          )
-        }
-      })}
-    </form>
+        )
+    }
+
+    return <div>Select a section to edit.</div>
+  }
+
+  if (loading) return <div>Loading Resume Editor...</div>;
+  if (!resumeData) return <div className="text-red-500">Error: Resume data could not be loaded.</div>;
+  
+  const sections = Object.keys(resumeData);
+
+  return (
+    <div className="flex gap-8">
+      {/* --- Left Navigation --- */}
+      <div className="w-1/4 bg-contrast p-4 rounded-lg shadow-lg">
+        <h3 className="text-xl font-bold text-white mb-4">Sections</h3>
+        <ul>
+          {sections.map(section => (
+            <li key={section}>
+              <button
+                onClick={() => setActiveSection(section)}
+                className={`w-full text-left px-4 py-2 rounded-lg mb-2 transition ${activeSection === section ? "bg-secondary text-white" : "text-white hover:bg-darkback"}`}
+              >
+                {section}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* --- Right Editor --- */}
+      <form onSubmit={handleUpdate} className="w-3/4 space-y-6">
+        <div className="flex justify-between items-center">
+          <h3 className="text-2xl font-bold text-text">Editing: {activeSection}</h3>
+          <button className="px-6 py-3 bg-secondary text-white font-bold rounded-lg hover:bg-darkback transition-colors" type="submit">
+            Save All Changes
+          </button>
+        </div>
+        {message && <p className="text-center p-3 bg-gray-200 rounded-md text-gray-800">{message}</p>}
+
+        <motion.div
+            key={activeSection}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="p-4 border border-dashed border-contrast rounded-lg"
+        >
+            {renderSectionEditor()}
+        </motion.div>
+      </form>
+    </div>
   );
 }
