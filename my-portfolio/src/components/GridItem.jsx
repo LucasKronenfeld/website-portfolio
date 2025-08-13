@@ -1,21 +1,21 @@
-import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
-export default function GridItem({ item, size }) {
-  const itemClass = size === 'large' 
-    ? "md:col-span-2 md:row-span-2" 
-    : "md:col-span-1 md:row-span-1";
-
+const GridItem = ({ imageUrl, title, description, link }) => {
   return (
-    <div className={`${itemClass} bg-surface rounded-lg overflow-hidden group relative`}>
-      <Link to={item.link} className="block w-full h-full">
-        <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110" />
-        <div className="absolute inset-0 bg-black/50 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div>
-            <h3 className="text-xl font-bold text-text">{item.title}</h3>
-            <p className="text-muted">{item.category}</p>
-          </div>
-        </div>
-      </Link>
-    </div>
+    <motion.a 
+      href={link} 
+      target="_blank" 
+      rel="noopener noreferrer" 
+      className="block bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300"
+      variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+    >
+      <img src={imageUrl} alt={title} className="w-full h-48 object-cover" />
+      <div className="p-6">
+        <h3 className="font-bold text-xl mb-2 text-gray-800">{title}</h3>
+        <p className="text-gray-600 text-base">{description}</p>
+      </div>
+    </motion.a>
   );
-}
+};
+
+export default GridItem;

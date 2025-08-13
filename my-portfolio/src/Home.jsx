@@ -1,107 +1,31 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { db } from './firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import Hero from './components/Hero';
 import GridItem from './components/GridItem';
 
-// Processes all data and filters for featured items.
-const processFetchedData = (portfolioData, projectsData) => {
-  let combined = [];
-
-  // Add featured portfolio items
-  if (portfolioData) {
-    for (const category in portfolioData) {
-      if (portfolioData[category]) {
-        portfolioData[category].forEach(item => {
-          if (item.featured) {
-            combined.push({
-              id: `portfolio-${category}-${item.title}`,
-              title: item.title,
-              image: item.imageUrl,
-              category: category,
-              link: `/portfolio`,
-            });
-          }
-        });
-      }
-    }
-  }
-
-  // Add featured project items
-  if (projectsData) {
-    for (const category in projectsData) {
-      if(projectsData[category]) {
-        projectsData[category].forEach(item => {
-          if (item.featured) {
-            combined.push({
-              id: `projects-${category}-${item.title}`,
-              title: item.title,
-              image: item.imageSrc,
-              category: category,
-              link: item.link || `/projects`,
-            });
-          }
-        });
-      }
-    }
-  }
-
-  // Assign size property for the bento grid layout.
-  return combined.map((item, index) => ({
-    ...item,
-    size: index === 0 ? 'large' : 'default',
-  }));
-};
-
-
-export default function Home() {
-  const [portfolioData, setPortfolioData] = useState(null);
-  const [projectsData, setProjectsData] = useState(null);
-  const [loading, setLoading] = useState(true);
+const Home = () => {
+  const [featuredContent, setFeaturedContent] = useState([]);
 
   useEffect(() => {
-    const fetchAllData = async () => {
-      try {
-        const portfolioRef = doc(db, 'portfolio', 'data');
-        const projectsRef = doc(db, 'projects', 'data');
-        
-        const [portfolioSnap, projectsSnap] = await Promise.all([
-          getDoc(portfolioRef),
-          getDoc(projectsRef)
-        ]);
-
-        if (portfolioSnap.exists()) setPortfolioData(portfolioSnap.data());
-        if (projectsSnap.exists()) setProjectsData(projectsSnap.data());
-
-      } catch (error) {
-        console.error("Error fetching homepage data: ", error);
-      } finally {
-        setLoading(false);
+    const fetchFeatured = async () => {
+      const docRef = doc(db, 'featured', 'home');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists() && docSnap.data().items) {
+        setFeaturedContent(docSnap.data().items);
       }
     };
-    fetchAllData();
+    fetchFeatured();
   }, []);
 
-  const featuredContent = useMemo(() => {
-    return processFetchedData(portfolioData, projectsData);
-  }, [portfolioData, projectsData]);
-
-  if (loading) {
-    return (
-      <div className="bg-background text-text min-h-screen flex items-center justify-center">
-        <p className="text-2xl">Loading amazing things...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-background text-text min-h-screen">
+    <div className="bg-[#f5f5f7] text-gray-800 min-h-screen">
       <Hero />
       
       <div className="container mx-auto px-6 py-24" id="featured-work">
         <motion.h2 
-          className="text-4xl font-bold text-center mb-12 text-text"
+          className="text-5xl font-bold text-center mb-16 text-gray-800"
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -112,25 +36,33 @@ export default function Home() {
         
         {featuredContent.length > 0 ? (
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 auto-rows-[250px]"
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
             variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
           >
             {featuredContent.map(item => (
-              <motion.div key={item.id} variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                <GridItem item={item} size={item.size} />
+              <motion.div 
+                key={item.id} 
+                variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+                className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300"
+              >
+                <GridItem 
+                  imageUrl={item.imageUrl}
+                  title={item.title}
+                  description={item.description}
+                  link={item.link}
+                />
               </motion.div>
             ))}
           </motion.div>
         ) : (
-          <div className="text-center text-muted py-8">
-            <p className="text-lg">No featured items to display at the moment.</p>
-            <p className="text-sm">You can select items to feature from the Admin Dashboard.</p>
-          </div>
+          <p className="text-center text-gray-500">Loading featured work...</p>
         )}
       </div>
     </div>
   );
-}
+};
+
+export default Home;

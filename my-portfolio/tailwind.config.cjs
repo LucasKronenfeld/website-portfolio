@@ -1,6 +1,4 @@
 /** @type {import('tailwindcss').Config} */
-const { fontFamily } = require('tailwindcss/defaultTheme')
-
 module.exports = {
   content: [
     "./index.html",
@@ -8,21 +6,26 @@ module.exports = {
   ],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ['Inter', ...fontFamily.sans],
+      animation: {
+        blob: 'blob 7s infinite',
       },
-      colors: {
-        'background': '#0D1117',
-        'text': '#E6EDF3',
-        'muted': '#8B949E',
-        'surface': '#161B22',
-        'primary': '#A78BFA',
-        'secondary': '#38BDF8'
-      },
-      backgroundImage: {
-        'gradient-accent': 'linear-gradient(to right, #38BDF8, #A78BFA)',
+      keyframes: {
+        blob: {
+          '0%': {
+            transform: 'translate(0px, 0px) scale(1)',
+          },
+          '33%': {
+            transform: 'translate(30px, -50px) scale(1.1)',
+          },
+          '66%': {
+            transform: 'translate(-20px, 20px) scale(0.9)',
+          },
+          '100%': {
+            transform: 'translate(0px, 0px) scale(1)',
+          },
+        },
       },
     },
   },
   plugins: [],
-}
+};

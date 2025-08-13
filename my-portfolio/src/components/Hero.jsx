@@ -1,60 +1,39 @@
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Sphere, Torus } from '@react-three/drei';
-import { useScroll, useTransform, motion as m } from 'framer-motion';
-import { ChevronDownIcon } from '@heroicons/react/24/outline';
+import { motion } from "framer-motion";
 
-function Scene() {
-  const { scrollYProgress } = useScroll();
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.5]);
-  const rotation = useTransform(scrollYProgress, [0, 1], [0, Math.PI * 2]);
-
+const Hero = () => {
   return (
-    <m.group style={{ scale }} rotation={[0, rotation, 0]}>
-      <Sphere args={[1, 32, 32]} position={[-2.5, 0, 0]}>
-        <meshStandardMaterial color="#A78BFA" roughness={0.3} />
-      </Sphere>
-      <Sphere args={[1, 32, 32]} position={[2.5, 0, 0]}>
-        <meshStandardMaterial color="#38BDF8" roughness={0.3} />
-      </Sphere>
-      <Torus args={[10, 0.1, 16, 100]} rotation-x={Math.PI / 2}>
-        <meshStandardMaterial color="#E6EDF3" roughness={0.1} />
-      </Torus>
-    </m.group>
-  );
-}
-
-export default function Hero() {
-  return (
-    <div className="relative h-screen flex flex-col items-center justify-center text-center bg-background text-text">
-      <div className="absolute inset-0 z-0 opacity-50">
-        <Canvas frameloop="demand">
-          <ambientLight intensity={0.5} />
-          <pointLight position={[10, 10, 10]} />
-          <OrbitControls enableZoom={false} enablePan={false} />
-          <Scene />
-        </Canvas>
-      </div>
-      <div className="z-10 px-4">
-        <m.h1 
-          className="text-6xl md:text-8xl font-bold mb-4 bg-gradient-accent bg-clip-text text-transparent"
-          initial={{ opacity: 0, y: -50 }}
+    <div className="relative h-[90vh] flex items-center justify-center text-center overflow-hidden bg-[#f5f5f7]">
+      <div className="relative z-10 p-6">
+        <motion.h1 
+          className="text-6xl md:text-8xl font-bold text-gray-800 tracking-tight"
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
         >
-          Lucas Kronenfeld
-        </m.h1>
-        <m.p 
-          className="text-lg md:text-2xl text-muted max-w-2xl mx-auto"
-          initial={{ opacity: 0, y: 50 }}
+          Lucas Gray
+        </motion.h1>
+        <motion.p 
+          className="mt-4 text-xl md:text-2xl text-gray-600"
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+          transition={{ duration: 0.8, ease: "easeInOut", delay: 0.2 }}
         >
-          I am a passionate developer and designer, crafting beautiful and functional web experiences that solve real-world problems.
-        </m.p>
-      </div>
-      <div className="absolute bottom-10 z-10">
-        <ChevronDownIcon className="w-8 h-8 text-muted animate-bounce" />
+          Full-Stack Developer & Creative Technologist
+        </motion.p>
+        <motion.button 
+          className="mt-8 px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full transition-colors duration-300"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => document.getElementById('featured-work').scrollIntoView({ behavior: 'smooth' })}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeInOut", delay: 0.4 }}
+        >
+          View My Work
+        </motion.button>
       </div>
     </div>
   );
-}
+};
+
+export default Hero;
