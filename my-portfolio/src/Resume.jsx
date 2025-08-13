@@ -4,92 +4,82 @@ import { db } from "./firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 
 const sections = [
-  "Full Resume", "Summary", "Work Experience", "Projects", "Skills", "Education", "Relevant Coursework", "Volunteer Work"
+  "Summary", "Work Experience", "Projects", "Skills", "Education"
 ];
 
 const SectionContent = ({ section, data }) => {
-  if (!data) return <p className="text-muted">No data available for this section.</p>;
+  if (!data) return <p className="text-gray-500">This section is not available.</p>;
 
-  if (section === "Projects") {
-    return (
-      <div className="space-y-4">
-        {data.map((project, index) => (
-          <motion.div 
-            key={index} 
-            className="p-4 bg-background rounded-lg border border-white/10 transition-colors hover:bg-surface"
-            whileHover={{ scale: 1.02 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <h3 className="text-lg font-semibold text-primary">{project.title}</h3>
-            <p className="text-muted mt-1">{project.description}</p>
-            {project.link && (
-              <a href={project.link} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline mt-2 inline-block">
-                View Project &rarr;
-              </a>
-            )}
-          </motion.div>
-        ))}
-      </div>
-    );
-  }
-
-  if (section === "Skills" || section === "Relevant Coursework") {
-    return (
-      <div className="space-y-6">
-        {Object.entries(data).map(([category, items], index) => (
-          <div key={index}>
-            <h3 className="text-lg font-semibold text-primary mb-3">{category}</h3>
-            <div className="flex flex-wrap gap-3">
-              {Array.isArray(items) && items.map((item, itemIndex) => (
-                <motion.span 
-                  key={itemIndex} 
-                  className="px-4 py-2 bg-primary/10 text-text rounded-full font-medium border border-primary/30"
-                  whileHover={{ scale: 1.05, backgroundColor: "rgba(167, 139, 250, 0.2)" }}
+  switch (section) {
+    case "Work Experience":
+      return (
+        <div className="space-y-6">
+          {data.map((job, index) => (
+            <motion.div key={index} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}>
+              <h3 className="text-xl font-semibold text-gray-800">{job.title}</h3>
+              <p className="text-md text-gray-600">{job.role} | {job.duration}</p>
+              <p className="mt-2 text-gray-700">{job.description}</p>
+            </motion.div>
+          ))}
+        </div>
+      );
+    case "Projects":
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {data.map((project, index) => (
+                <motion.div 
+                  key={index}
+                  className="bg-white rounded-lg shadow-md p-6 border border-gray-200"
+                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}
                 >
-                  {item}
-                </motion.span>
+                  <h3 className="text-xl font-semibold text-gray-800">{project.title}</h3>
+                  <p className="mt-2 text-gray-700">{project.description}</p>
+                  {project.link && <a href={project.link} className="text-blue-600 hover:underline mt-4 inline-block">View Project</a>}
+                </motion.div>
               ))}
             </div>
-          </div>
-        ))}
-      </div>
-    );
+          );
+    case "Skills":
+      return (
+        <div className="space-y-4">
+          {Object.entries(data).map(([category, skills]) => (
+            <div key={category}>
+              <h4 className="text-lg font-semibold text-gray-700 mb-2">{category}</h4>
+              <div className="flex flex-wrap gap-2">
+                {skills.map((skill, index) => (
+                  <motion.span 
+                    key={index} 
+                    className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm"
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.05 }}
+                  >
+                    {skill}
+                  </motion.span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    case "Education":
+      return (
+        <div className="space-y-4">
+          {data.map((edu, index) => (
+             <motion.div key={index} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}>
+                <h3 className="text-xl font-semibold text-gray-800">{edu.degree}</h3>
+                <p className="text-md text-gray-600">{edu.institution} | {edu.year}</p>
+             </motion.div>
+          ))}
+        </div>
+      );
+    default:
+      return <p className="text-gray-700">{data}</p>;
   }
-  
-  if (section === "Work Experience" || section === "Volunteer Work") {
-    return (
-      <ul className="space-y-4">
-        {data.map((item, index) => (
-          <motion.li 
-            key={index} 
-            className="p-4 rounded-lg border border-transparent transition-colors hover:bg-surface hover:border-white/10"
-            whileHover={{ scale: 1.02 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <h3 className="text-lg font-semibold text-text">{item.title}</h3>
-            <p className="text-sm text-muted">{item.role} ({item.duration})</p>
-            <p className="mt-2 text-text/90">{item.description}</p>
-          </motion.li>
-        ))}
-      </ul>
-    );
-  }
-
-  // Default layout for simple text or array of strings (like Education)
-  return (
-    <div className="prose prose-invert max-w-none">
-      {Array.isArray(data) ? 
-        <ul>{data.map((item, i) => <li key={i}>{item}</li>)}</ul> : 
-        <p>{data}</p>
-      }
-    </div>
-  );
 };
 
 export default function Resume() {
-  const [activeSection, setActiveSection] = useState("Full Resume");
   const [resumeData, setResumeData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchResumeData = async () => {
@@ -102,8 +92,9 @@ export default function Resume() {
           console.log("No resume data found.");
           setResumeData({});
         }
-      } catch (error) {
-        console.error("Error fetching resume data: ", error);
+      } catch (err) {
+        console.error("Error fetching resume data: ", err);
+        setError("Could not load resume data. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -111,56 +102,41 @@ export default function Resume() {
     fetchResumeData();
   }, []);
 
-  if (loading || !resumeData) {
-    return <div className="min-h-screen bg-background flex items-center justify-center text-text">Loading Resume...</div>;
+  if (loading) {
+    return <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center text-gray-800">Loading Resume...</div>;
+  }
+  
+  if (error) {
+    return <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center text-red-600">{error}</div>;
   }
 
   return (
-    <div className="min-h-screen bg-background text-text pt-24">
-      <div className="container mx-auto px-6 py-12 flex flex-col md:flex-row gap-8">
-        <aside className="w-full md:w-1/4">
-          <div className="sticky top-28">
-            <h2 className="text-xl font-bold text-text mb-4">Sections</h2>
-            <ul className="space-y-2">
-              {sections.map(section => (
-                <li key={section}>
-                  <button
-                    onClick={() => setActiveSection(section)}
-                    className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${activeSection === section ? "bg-primary text-white" : "text-muted hover:bg-surface"}`}
-                  >
-                    {section}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </aside>
+    <div className="min-h-screen bg-[#f5f5f7] text-gray-800 pt-28">
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+        >
+            <h1 className="text-5xl font-bold text-gray-900">Resume</h1>
+            <p className="text-lg text-gray-600 mt-2">My professional background and skills.</p>
+        </motion.div>
 
-        <main className="w-full md:w-3/4 bg-surface p-8 rounded-lg border border-white/10">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeSection}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <h1 className="text-3xl font-bold text-text mb-6 border-b border-white/10 pb-4">{activeSection}</h1>
-              {activeSection === "Full Resume" ? (
-                <div className="space-y-8">
-                  {sections.slice(1).map(sec => (
-                    <section key={sec}>
-                      <h2 className="text-2xl font-bold text-text mb-4">{sec}</h2>
-                      <SectionContent section={sec} data={resumeData[sec]} />
-                    </section>
-                  ))}
-                </div>
-              ) : (
-                <SectionContent section={activeSection} data={resumeData[activeSection]} />
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </main>
+        <div className="space-y-12">
+            {sections.map(section => (
+                <motion.section 
+                    key={section}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ duration: 0.6 }}
+                >
+                    <h2 className="text-3xl font-bold text-gray-800 mb-6 pb-2 border-b-2 border-gray-200">{section}</h2>
+                    <SectionContent section={section} data={resumeData[section]} />
+                </motion.section>
+            ))}
+        </div>
       </div>
     </div>
   );

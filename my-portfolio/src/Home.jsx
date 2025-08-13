@@ -7,13 +7,19 @@ import GridItem from './components/GridItem';
 
 const Home = () => {
   const [featuredContent, setFeaturedContent] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchFeatured = async () => {
-      const docRef = doc(db, 'featured', 'home');
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists() && docSnap.data().items) {
-        setFeaturedContent(docSnap.data().items);
+      try {
+        const docRef = doc(db, 'featured', 'home');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists() && docSnap.data().items) {
+          setFeaturedContent(docSnap.data().items);
+        }
+      } catch (err) {
+        console.error("Error fetching featured content:", err);
+        setError("Could not load featured work.");
       }
     };
     fetchFeatured();
@@ -34,7 +40,9 @@ const Home = () => {
           Featured Work
         </motion.h2>
         
-        {featuredContent.length > 0 ? (
+        {error && <p className="text-center text-red-500">{error}</p>}
+
+        {!error && featuredContent.length > 0 ? (
           <motion.div 
             className="grid grid-cols-1 md:grid-cols-3 gap-8"
             initial="hidden"
@@ -43,22 +51,17 @@ const Home = () => {
             variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
           >
             {featuredContent.map(item => (
-              <motion.div 
+              <GridItem 
                 key={item.id} 
-                variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-                className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300"
-              >
-                <GridItem 
-                  imageUrl={item.imageUrl}
-                  title={item.title}
-                  description={item.description}
-                  link={item.link}
-                />
-              </motion.div>
+                imageUrl={item.imageUrl}
+                title={item.title}
+                description={item.description}
+                link={item.link}
+              />
             ))}
           </motion.div>
         ) : (
-          <p className="text-center text-gray-500">Loading featured work...</p>
+          !error && <p className="text-center text-gray-500">Loading featured work...</p>
         )}
       </div>
     </div>

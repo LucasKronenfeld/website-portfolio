@@ -8,6 +8,7 @@ export default function Projects() {
   const [projectsData, setProjectsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchProjectsData = async () => {
@@ -23,9 +24,9 @@ export default function Projects() {
         } else {
           setProjectsData({});
         }
-      } catch (error) {
-        console.error("Error fetching projects data:", error);
-        setProjectsData({});
+      } catch (err) {
+        console.error("Error fetching projects data:", err);
+        setError("Could not load projects. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -61,9 +62,10 @@ export default function Projects() {
           </p>
         </motion.div>
 
-        {loading ? (
-          <div className="text-center text-white">Loading...</div>
-        ) : projectsData && Object.keys(projectsData).length > 0 ? (
+        {loading && <div className="text-center text-white">Loading...</div>}
+        {error && <div className="text-center text-red-500">{error}</div>}
+
+        {!loading && !error && projectsData && Object.keys(projectsData).length > 0 ? (
           <>
             <div className="flex justify-center space-x-2 md:space-x-4 mb-12 flex-wrap">
               {Object.keys(projectsData).map((tab) => (
@@ -100,7 +102,7 @@ export default function Projects() {
             </AnimatePresence>
           </>
         ) : (
-          <div className="text-center text-gray-400">No projects found.</div>
+          !loading && !error && <div className="text-center text-gray-400">No projects found.</div>
         )}
       </div>
     </motion.div>
