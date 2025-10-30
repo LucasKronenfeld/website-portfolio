@@ -99,9 +99,9 @@ export default function Home() {
     <div className="bg-background text-text min-h-screen">
       <Hero />
       
-      <div className="container mx-auto px-6 py-24" id="featured-work">
+      <div className="container mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-24" id="featured-work">
         <motion.h2 
-          className="text-4xl font-bold text-center mb-12 text-text"
+          className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-8 sm:mb-10 md:mb-12 text-text"
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -112,7 +112,7 @@ export default function Home() {
         
         {featuredContent.length > 0 ? (
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 auto-rows-[250px]"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 auto-rows-[200px] sm:auto-rows-[250px]"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
@@ -125,9 +125,9 @@ export default function Home() {
             ))}
           </motion.div>
         ) : (
-          <div className="text-center text-muted py-8">
-            <p className="text-lg">No featured items to display at the moment.</p>
-            <p className="text-sm">You can select items to feature from the Admin Dashboard.</p>
+          <div className="text-center text-muted py-8 px-4">
+            <p className="text-base sm:text-lg">No featured items to display at the moment.</p>
+            <p className="text-sm mt-2">You can select items to feature from the Admin Dashboard.</p>
           </div>
         )}
       </div>

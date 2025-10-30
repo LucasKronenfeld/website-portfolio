@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from './firebaseConfig';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import ImageUpload from './components/ImageUpload';
+import MultiImageUpload from './components/MultiImageUpload';
 
 const FormInput = (props) => <input {...props} className="w-full p-3 bg-background border border-white/20 rounded-lg text-text focus:ring-primary focus:border-primary" />;
 const FormTextarea = (props) => <textarea {...props} className="w-full p-3 bg-background border border-white/20 rounded-lg text-text focus:ring-primary focus:border-primary" />;
@@ -10,7 +12,10 @@ const DangerButton = ({ children, ...props }) => <button {...props} className="p
 
 export default function AdminPosts() {
   const [title, setTitle] = useState('');
+  const [excerpt, setExcerpt] = useState('');
   const [content, setContent] = useState('');
+  const [coverImage, setCoverImage] = useState('');
+  const [galleryImages, setGalleryImages] = useState([]);
   const [message, setMessage] = useState('');
   const [posts, setPosts] = useState([]);
   const [editing, setEditing] = useState(null);
@@ -42,10 +47,21 @@ export default function AdminPosts() {
     }
 
     try {
-      await addDoc(collection(db, 'posts'), { title, content, createdAt: new Date(), authorId: user.uid });
+      await addDoc(collection(db, 'posts'), { 
+        title, 
+        excerpt,
+        content, 
+        coverImage,
+        galleryImages,
+        createdAt: new Date(), 
+        authorId: user.uid 
+      });
       setMessage('Post created successfully!');
       setTitle('');
+      setExcerpt('');
       setContent('');
+      setCoverImage('');
+      setGalleryImages([]);
       fetchPosts();
     } catch (error) {
       setMessage('Error creating post: ' + error.message);
@@ -66,7 +82,13 @@ export default function AdminPosts() {
     if (!editing) return;
     try {
       const postRef = doc(db, 'posts', editing.id);
-      await updateDoc(postRef, { title: editing.title, content: editing.content });
+      await updateDoc(postRef, { 
+        title: editing.title,
+        excerpt: editing.excerpt || '',
+        content: editing.content,
+        coverImage: editing.coverImage || '',
+        galleryImages: editing.galleryImages || []
+      });
       setMessage('Post updated successfully!');
       setEditing(null);
       fetchPosts();
@@ -93,8 +115,30 @@ export default function AdminPosts() {
         {editing && (
             <form onSubmit={handleUpdate} className="space-y-4 p-4 border border-dashed border-white/20 rounded-lg">
                 <h3 className="text-xl font-semibold text-text">Edit "{editing.title}"</h3>
-                <FormInput type="text" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} required />
-                <FormTextarea value={editing.content} onChange={(e) => setEditing({ ...editing, content: e.target.value })} rows={8} required />
+                <div>
+                    <label className="text-sm text-muted block mb-1">Title</label>
+                    <FormInput type="text" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} required />
+                </div>
+                <div>
+                    <label className="text-sm text-muted block mb-1">Short Description (for blog cards)</label>
+                    <FormTextarea value={editing.excerpt || ''} onChange={(e) => setEditing({ ...editing, excerpt: e.target.value })} rows={3} placeholder="Brief summary shown on blog cards..." />
+                </div>
+                <div>
+                    <label className="text-sm text-muted block mb-1">Full Content</label>
+                    <FormTextarea value={editing.content} onChange={(e) => setEditing({ ...editing, content: e.target.value })} rows={8} required />
+                </div>
+                <ImageUpload 
+                    currentUrl={editing.coverImage || ''} 
+                    onUploadComplete={(url) => setEditing({ ...editing, coverImage: url })}
+                    folder="blog"
+                    label="Cover Image"
+                />
+                <MultiImageUpload 
+                    images={editing.galleryImages || []} 
+                    onImagesChange={(imgs) => setEditing({ ...editing, galleryImages: imgs })}
+                    folder="blog"
+                    label="Gallery Images"
+                />
                 <div className="flex gap-4">
                     <PrimaryButton type="submit">Update Post</PrimaryButton>
                     <SecondaryButton type="button" onClick={() => setEditing(null)}>Cancel</SecondaryButton>
@@ -104,8 +148,30 @@ export default function AdminPosts() {
 
         <form onSubmit={handleNewPost} className="space-y-4">
             <h3 className="text-xl font-semibold text-text">Create New Post</h3>
-            <FormInput type="text" placeholder="Post Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-            <FormTextarea placeholder="Write your post content here..." value={content} onChange={(e) => setContent(e.target.value)} rows={8} required />
+            <div>
+                <label className="text-sm text-muted block mb-1">Title</label>
+                <FormInput type="text" placeholder="Post Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            </div>
+            <div>
+                <label className="text-sm text-muted block mb-1">Short Description (for blog cards)</label>
+                <FormTextarea placeholder="Brief summary shown on blog cards (optional - will use first 150 chars of content if empty)" value={excerpt} onChange={(e) => setExcerpt(e.target.value)} rows={3} />
+            </div>
+            <div>
+                <label className="text-sm text-muted block mb-1">Full Content</label>
+                <FormTextarea placeholder="Write your full post content here..." value={content} onChange={(e) => setContent(e.target.value)} rows={8} required />
+            </div>
+            <ImageUpload 
+                currentUrl={coverImage} 
+                onUploadComplete={setCoverImage}
+                folder="blog"
+                label="Cover Image (Optional)"
+            />
+            <MultiImageUpload 
+                images={galleryImages} 
+                onImagesChange={setGalleryImages}
+                folder="blog"
+                label="Gallery Images (Optional)"
+            />
             <PrimaryButton type="submit">Create Post</PrimaryButton>
         </form>
         

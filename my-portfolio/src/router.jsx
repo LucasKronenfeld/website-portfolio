@@ -7,6 +7,7 @@ import NotFound from "./NotFound";
 import About from "./About";
 import Projects from "./Projects";
 import Blog from "./Blog"; // <-- 1. IMPORT THE NEW COMPONENT
+import BlogPost from "./BlogPost";
 
 // --- Import the new Admin components ---
 import AdminLogin from "./AdminLogin";
@@ -31,6 +32,7 @@ const router = createBrowserRouter([
       { path: "About", element: <About /> },
       { path: "Projects", element: <Projects /> },
       { path: "blog", element: <Blog /> }, // <-- 2. ADD THE NEW ROUTE
+      { path: "blog/:id", element: <BlogPost /> }, // Blog post detail page
 
       { path: "*", element: <NotFound /> }, // Catch-all for 404s
     ],

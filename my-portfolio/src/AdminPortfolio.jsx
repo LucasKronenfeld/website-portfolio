@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from './firebaseConfig';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
+import ImageUpload from './components/ImageUpload';
 
 // --- Shared Form Components ---
 const FormInput = (props) => <input {...props} className="w-full p-2 bg-background border border-white/20 rounded-md text-text focus:ring-primary focus:border-primary" />;
@@ -118,6 +119,13 @@ export default function AdminPortfolio() {
                                         <label className="capitalize text-sm text-muted block mb-1">{field}</label>
                                         {field === 'featured' ? (
                                             <input type="checkbox" checked={item[field]} onChange={e => updateState([activeCategory, index, field], e.target.checked)} className="h-5 w-5 rounded bg-background border-white/20 text-primary focus:ring-primary"/>
+                                        ) : field === 'imageUrl' ? (
+                                            <ImageUpload 
+                                                currentUrl={item[field]} 
+                                                onUploadComplete={(url) => updateState([activeCategory, index, field], url)}
+                                                folder="portfolio"
+                                                label="Portfolio Image"
+                                            />
                                         ) : (
                                             <FormInput value={item[field]} onChange={(e) => updateState([activeCategory, index, field], e.target.value)} placeholder={field} />
                                         )}
