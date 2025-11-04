@@ -1,9 +1,6 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
 
 export default function BentoGrid({ items }) {
-  const [selectedImage, setSelectedImage] = useState(null);
-
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -25,7 +22,7 @@ export default function BentoGrid({ items }) {
     }
   };
 
-  // Create a Pinterest-style layout pattern
+  // Create a bento box pattern with varied sizes
   const getGridClass = (index) => {
     const patterns = [
       'row-span-2', // tall
@@ -43,74 +40,36 @@ export default function BentoGrid({ items }) {
   };
 
   return (
-    <>
-      <motion.div
-        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 auto-rows-[150px] sm:auto-rows-[200px]"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {items.map((item, index) => (
-          <motion.div
-            key={`${item.title}-${index}`}
-            className={`group relative overflow-hidden rounded-lg border border-white/10 cursor-pointer hover:border-primary/50 transition-colors ${getGridClass(index)}`}
-            variants={itemVariants}
-            whileHover={{ scale: 1.02 }}
-            onClick={() => setSelectedImage(item)}
-          >
+    <motion.div
+      className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 auto-rows-[200px] sm:auto-rows-[250px] lg:auto-rows-[300px]"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {items.map((item, index) => (
+        <motion.div
+          key={`${item.title}-${index}`}
+          className={`group relative overflow-hidden rounded-lg border border-white/10 bg-surface/50 transition-all duration-300 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20 hover:scale-105 hover:z-10 ${getGridClass(index)}`}
+          variants={itemVariants}
+        >
+          <div className="w-full h-full flex items-center justify-center p-2">
             <img
               src={item.imageUrl}
               alt={item.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              className="max-w-full max-h-full object-contain transition-transform duration-500"
+              loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3 sm:p-4">
-              <div className="w-full">
-                <h3 className="text-sm sm:text-base md:text-lg font-bold text-white mb-1">{item.title}</h3>
-                {item.description && (
-                  <p className="text-xs sm:text-sm text-gray-300 line-clamp-2">{item.description}</p>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
-
-      {/* Lightbox Modal */}
-      {selectedImage && (
-        <motion.div
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setSelectedImage(null)}
-        >
-          <motion.div
-            className="relative max-w-7xl max-h-[90vh] w-full"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setSelectedImage(null)}
-              className="absolute -top-12 right-0 text-white hover:text-primary transition-colors text-lg font-semibold"
-            >
-              Close ✕
-            </button>
-            <img
-              src={selectedImage.imageUrl}
-              alt={selectedImage.title}
-              className="w-full h-full object-contain rounded-lg"
-            />
-            <div className="mt-4 text-center">
-              <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">{selectedImage.title}</h3>
-              {selectedImage.description && (
-                <p className="text-sm sm:text-base text-gray-300">{selectedImage.description}</p>
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3 sm:p-4">
+            <div className="w-full">
+              <h3 className="text-sm sm:text-base md:text-lg font-bold text-white mb-1">{item.title}</h3>
+              {item.description && (
+                <p className="text-xs sm:text-sm text-gray-300 line-clamp-2">{item.description}</p>
               )}
             </div>
-          </motion.div>
+          </div>
         </motion.div>
-      )}
-    </>
+      ))}
+    </motion.div>
   );
 }

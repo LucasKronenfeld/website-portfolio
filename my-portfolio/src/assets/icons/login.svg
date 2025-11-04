@@ -1,0 +1,6 @@
+<!-- Placeholder Microlink-style login icon. Replace with official Microlink SVG when provided. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter">
+  <path d="M10 12h10" />
+  <path d="M14 8l4 4-4 4" />
+  <rect x="3" y="4" width="6" height="16" />
+</svg>

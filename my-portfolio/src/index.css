@@ -24,4 +24,43 @@
 }
 
 
+/* Base retro desktop background and typography */
+@layer base {
+  html, body, #root {
+    @apply min-h-screen bg-paper text-text;
+  }
+  body {
+    /* Subtle CRT/halftone look using composed backgrounds */
+    background-image: theme('backgroundImage.crt-dots'), theme('backgroundImage.crt-scan');
+    background-size: theme('backgroundSize.dots'), theme('backgroundSize.scan');
+    background-blend-mode: multiply;
+  }
+}
+
+/* Retro Macintosh-style components */
+@layer components {
+  .mac-window {
+    @apply bg-paper border-2 border-ink rounded-none;
+  }
+  .mac-titlebar {
+    @apply w-full bg-surface border-b-2 border-ink text-ink px-3 py-1 flex items-center justify-between select-none;
+  }
+  .mac-title {
+    @apply font-bold tracking-wide uppercase text-xs leading-100;
+  }
+  .mac-controls {
+    @apply flex items-center gap-2;
+  }
+  .mac-dot {
+    width: 10px; height: 10px; background: #000; border: 1px solid #000;
+  }
+  .mac-content {
+    @apply p-4 md:p-6;
+  }
+  .pixel-border {
+    box-shadow: inset 0 0 0 1px #fff;
+  }
+}
+
+
 

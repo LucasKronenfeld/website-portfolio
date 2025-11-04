@@ -1,0 +1,5 @@
+<!-- Placeholder Microlink-style close icon. Replace with official Microlink SVG when provided. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter">
+  <path d="M5 5l14 14" />
+  <path d="M19 5L5 19" />
+</svg>

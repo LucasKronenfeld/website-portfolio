@@ -3,6 +3,9 @@ import { db } from './firebaseConfig';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import ImageUpload from './components/ImageUpload';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // --- Shared Form Components ---
 const FormInput = (props) => <input {...props} className="w-full p-2 bg-background border border-white/20 rounded-md text-text focus:ring-primary focus:border-primary" />;
@@ -17,11 +20,92 @@ const TabButton = ({ children, active, ...props }) => (
 
 const portfolioFieldOrder = ['title', 'description', 'imageUrl', 'featured'];
 
+// Sortable Item Component
+function SortablePortfolioItem({ id, item, index, activeCategory, updateState, portfolioData }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <div 
+            ref={setNodeRef} 
+            style={style} 
+            className="p-4 bg-background rounded-lg border border-white/10 space-y-3"
+        >
+            <div className="flex justify-between items-center gap-3">
+                <button
+                    type="button"
+                    className="cursor-grab active:cursor-grabbing text-muted hover:text-primary transition p-2 touch-none"
+                    {...attributes}
+                    {...listeners}
+                    title="Drag to reorder"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                    </svg>
+                </button>
+                <h4 className="font-semibold text-lg text-primary flex-grow">
+                    {item.title || `Item ${index + 1}`}
+                </h4>
+                <RemoveButton 
+                    onClick={() => updateState([activeCategory], portfolioData[activeCategory].filter((_, i) => i !== index))}
+                >
+                    Remove Item
+                </RemoveButton>
+            </div>
+            {portfolioFieldOrder.map(field => (
+                (item.hasOwnProperty(field)) && <div key={field}>
+                    <label className="capitalize text-sm text-muted block mb-1">{field}</label>
+                    {field === 'featured' ? (
+                        <input 
+                            type="checkbox" 
+                            checked={item[field]} 
+                            onChange={e => updateState([activeCategory, index, field], e.target.checked)} 
+                            className="h-5 w-5 rounded bg-background border-white/20 text-primary focus:ring-primary"
+                        />
+                    ) : field === 'imageUrl' ? (
+                        <ImageUpload 
+                            currentUrl={item[field]} 
+                            onUploadComplete={(url) => updateState([activeCategory, index, field], url)}
+                            folder="portfolio"
+                            label="Portfolio Image"
+                        />
+                    ) : (
+                        <FormInput 
+                            value={item[field]} 
+                            onChange={(e) => updateState([activeCategory, index, field], e.target.value)} 
+                            placeholder={field} 
+                        />
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+}
+
 export default function AdminPortfolio() {
     const [portfolioData, setPortfolioData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
     const [activeCategory, setActiveCategory] = useState(null);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     useEffect(() => {
         const fetchPortfolioData = async () => {
@@ -85,6 +169,18 @@ export default function AdminPortfolio() {
         const currentItems = portfolioData[category] || [];
         updateState([category], [...currentItems, newItem]);
     };
+
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
+        
+        if (!over || active.id === over.id) return;
+
+        const activeIndex = parseInt(active.id.split('-')[1]);
+        const overIndex = parseInt(over.id.split('-')[1]);
+
+        const newItems = arrayMove(portfolioData[activeCategory], activeIndex, overIndex);
+        updateState([activeCategory], newItems);
+    };
     
     if (loading) return <div className="text-muted text-center p-8">Loading Portfolio Editor...</div>;
     
@@ -111,28 +207,28 @@ export default function AdminPortfolio() {
             <AnimatePresence mode="wait">
                 <motion.div key={activeCategory} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="space-y-4">
                     {activeCategory && portfolioData[activeCategory] ? (
-                        portfolioData[activeCategory].map((item, index) => (
-                            <div key={index} className="p-4 bg-background rounded-lg border border-white/10 space-y-3">
-                                <div className="flex justify-between items-center"><h4 className="font-semibold text-lg text-primary">{item.title || `Item ${index + 1}`}</h4><RemoveButton onClick={() => updateState([activeCategory], portfolioData[activeCategory].filter((_, i) => i !== index))}>Remove Item</RemoveButton></div>
-                                {portfolioFieldOrder.map(field => (
-                                    (item.hasOwnProperty(field)) && <div key={field}>
-                                        <label className="capitalize text-sm text-muted block mb-1">{field}</label>
-                                        {field === 'featured' ? (
-                                            <input type="checkbox" checked={item[field]} onChange={e => updateState([activeCategory, index, field], e.target.checked)} className="h-5 w-5 rounded bg-background border-white/20 text-primary focus:ring-primary"/>
-                                        ) : field === 'imageUrl' ? (
-                                            <ImageUpload 
-                                                currentUrl={item[field]} 
-                                                onUploadComplete={(url) => updateState([activeCategory, index, field], url)}
-                                                folder="portfolio"
-                                                label="Portfolio Image"
-                                            />
-                                        ) : (
-                                            <FormInput value={item[field]} onChange={(e) => updateState([activeCategory, index, field], e.target.value)} placeholder={field} />
-                                        )}
-                                    </div>
+                        <DndContext 
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <SortableContext 
+                                items={portfolioData[activeCategory].map((_, index) => `portfolio-${index}`)}
+                                strategy={verticalListSortingStrategy}
+                            >
+                                {portfolioData[activeCategory].map((item, index) => (
+                                    <SortablePortfolioItem
+                                        key={`portfolio-${index}`}
+                                        id={`portfolio-${index}`}
+                                        item={item}
+                                        index={index}
+                                        activeCategory={activeCategory}
+                                        updateState={updateState}
+                                        portfolioData={portfolioData}
+                                    />
                                 ))}
-                            </div>
-                        ))
+                            </SortableContext>
+                        </DndContext>
                     ) : <p className="text-muted">Select a category to see its items.</p>}
                      {activeCategory && <AddButton onClick={() => handleAddItem(activeCategory)}>Add Item to {activeCategory}</AddButton>}
                 </motion.div>
