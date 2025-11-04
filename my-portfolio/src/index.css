@@ -21,6 +21,12 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  /* Pixel-crisp rendering for retro sprites/avatars */
+  .pixelated {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
 }
 
 

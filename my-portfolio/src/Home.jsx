@@ -2,7 +2,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { db } from './firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
-import Hero from './components/Hero';
+import RetroHero from './components/RetroHero';
+import PixelDivider from './components/PixelDivider';
+import DesktopIcon from './components/ui/DesktopIcon';
+import { Link } from 'react-router-dom';
 import GridItem from './components/GridItem';
 
 // Processes all data and filters for featured items.
@@ -97,37 +100,40 @@ export default function Home() {
 
   return (
     <div className="bg-background text-text min-h-screen">
-      <Hero />
-      
-      <div className="container mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-24" id="featured-work">
+      <RetroHero />
+      <PixelDivider variant="ascii" />
+
+      <div className="container mx-auto px-4 sm:px-6 py-8 md:py-10" id="featured-work">
         <motion.h2 
-          className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-8 sm:mb-10 md:mb-12 text-text"
-          initial={{ opacity: 0, y: -20 }}
+          className="font-mono text-2xl md:text-3xl leading-100 text-center mb-6 md:mb-8 text-ink"
+          initial={{ opacity: 0, y: -10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3 }}
         >
           Featured Work
         </motion.h2>
-        
+
         {featuredContent.length > 0 ? (
           <motion.div 
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 auto-rows-[200px] sm:auto-rows-[250px]"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
-            variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
+            variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
           >
             {featuredContent.map(item => (
-              <motion.div key={item.id} variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                <GridItem item={item} size={item.size} />
+              <motion.div key={item.id} variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} className="flex flex-col items-center">
+                <Link to={item.link} className="focus:outline-none">
+                  <DesktopIcon label={item.title} src={item.image} />
+                </Link>
               </motion.div>
             ))}
           </motion.div>
         ) : (
-          <div className="text-center text-muted py-8 px-4">
-            <p className="text-base sm:text-lg">No featured items to display at the moment.</p>
-            <p className="text-sm mt-2">You can select items to feature from the Admin Dashboard.</p>
+          <div className="text-center text-muted py-6 px-4">
+            <p className="text-sm md:text-base">No featured items to display at the moment.</p>
+            <p className="text-xs mt-1">You can select items to feature from the Admin Dashboard.</p>
           </div>
         )}
       </div>
