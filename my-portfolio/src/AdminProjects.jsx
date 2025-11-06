@@ -19,7 +19,7 @@ const TabButton = ({ children, active, ...props }) => (
     </button>
 );
 
-const projectFieldOrder = ['title', 'description', 'imageSrc', 'link', 'featured'];
+const projectFieldOrder = ['title', 'description', 'imageSrc', 'link', 'featured', 'inProgress', 'progress'];
 
 // Sortable Item Component
 function SortableProjectItem({ id, item, index, activeCategory, updateState, projectsData, allCategories, moveItemToCategory }) {
@@ -86,25 +86,34 @@ function SortableProjectItem({ id, item, index, activeCategory, updateState, pro
             {projectFieldOrder.map(field => (
                 <div key={field}>
                     <label className="capitalize text-sm text-muted block mb-1">{field}</label>
-                    {field === 'featured' ? (
-                        <input 
-                            type="checkbox" 
-                            checked={item[field]} 
-                            onChange={e => updateState([activeCategory, index, field], e.target.checked)} 
+                    {field === 'featured' || field === 'inProgress' ? (
+                        <input
+                            type="checkbox"
+                            checked={!!item[field]}
+                            onChange={e => updateState([activeCategory, index, field], e.target.checked)}
                             className="h-5 w-5 rounded bg-background border-white/20 text-primary focus:ring-primary"
                         />
+                    ) : field === 'progress' ? (
+                        <FormSelect
+                            value={typeof item.progress === 'number' ? item.progress : (item.progress || 0)}
+                            onChange={(e) => updateState([activeCategory, index, 'progress'], parseInt(e.target.value, 10))}
+                        >
+                            {[0,10,20,30,40,50,60,70,80,90,100].map(v => (
+                                <option key={v} value={v}>{v}%</option>
+                            ))}
+                        </FormSelect>
                     ) : field === 'imageSrc' ? (
-                        <ImageUpload 
-                            currentUrl={item[field]} 
+                        <ImageUpload
+                            currentUrl={item[field]}
                             onUploadComplete={(url) => updateState([activeCategory, index, field], url)}
                             folder="projects"
                             label="Project Image"
                         />
                     ) : (
-                        <FormInput 
-                            value={item[field]} 
-                            onChange={(e) => updateState([activeCategory, index, field], e.target.value)} 
-                            placeholder={field} 
+                        <FormInput
+                            value={item[field]}
+                            onChange={(e) => updateState([activeCategory, index, field], e.target.value)}
+                            placeholder={field}
                         />
                     )}
                 </div>
@@ -184,7 +193,7 @@ export default function AdminProjects() {
     };
 
     const handleAddItem = (category) => {
-        const newItem = { title: "", description: "", imageSrc: "", link: "", featured: false };
+        const newItem = { title: "", description: "", imageSrc: "", link: "", featured: false, inProgress: false, progress: 0 };
         const currentItems = projectsData[category] || [];
         updateState([category], [...currentItems, newItem]);
     };

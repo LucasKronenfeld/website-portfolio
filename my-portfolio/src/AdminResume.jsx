@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { db } from './firebaseConfig';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -76,21 +80,25 @@ export default function AdminResume() {
             case 'Work Experience':
             case 'Projects':
             case 'Volunteer Work':
+                // Drag + drop reorder for array items
                 return (
-                    <div className="space-y-4">
-                        {data.map((item, index) => (
-                            <div key={index} className="p-4 bg-background rounded-lg border border-white/10 space-y-3">
-                                <div className="flex justify-end"><RemoveButton onClick={() => handleRemove([activeSection], index)}>Remove Item</RemoveButton></div>
-                                {Object.keys(item).map(key => (
-                                    <div key={key}>
-                                        <label className="capitalize text-sm text-muted block mb-1">{key}</label>
-                                        <FormInput value={item[key]} onChange={e => updateNestedState([activeSection, index, key], e.target.value)} />
-                                    </div>
-                                ))}
-                            </div>
-                        ))}
-                        <AddButton onClick={() => handleAdd([activeSection], { title: "", role: "", duration: "", description: "" })}>Add {activeSection.slice(0, -1)}</AddButton>
-                    </div>
+                    <DraggableItemsEditor
+                        items={data}
+                        sectionKey={activeSection}
+                        onRemove={handleRemove}
+                        onAdd={() => {
+                            if (activeSection === 'Projects') {
+                                handleAdd([activeSection], { title: "", description: "", link: "" });
+                            } else {
+                                handleAdd([activeSection], { title: "", role: "", duration: "", description: "" });
+                            }
+                        }}
+                        onUpdateField={(index, field, value) => updateNestedState([activeSection, index, field], value)}
+                        onReorder={(oldIndex, newIndex) => {
+                            const updated = arrayMove(data, oldIndex, newIndex);
+                            updateNestedState([activeSection], updated);
+                        }}
+                    />
                 );
             
             case 'Education':
@@ -171,6 +179,61 @@ export default function AdminResume() {
                     </AnimatePresence>
                 </form>
             </main>
+        </div>
+    );
+}
+
+// Sortable item wrapper for dnd-kit
+function SortableItem({ id, children }) {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+    return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+            {children}
+        </div>
+    );
+}
+
+// Draggable editor for array items like Work Experience / Projects
+function DraggableItemsEditor({ items, sectionKey, onRemove, onAdd, onUpdateField, onReorder }) {
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+    );
+
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+        const oldIndex = items.findIndex((_, idx) => `item-${idx}` === active.id);
+        const newIndex = items.findIndex((_, idx) => `item-${idx}` === over.id);
+        if (oldIndex !== -1 && newIndex !== -1) onReorder(oldIndex, newIndex);
+    };
+
+    return (
+        <div className="space-y-4">
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={items.map((_, idx) => `item-${idx}`)} strategy={verticalListSortingStrategy}>
+                    {items.map((item, index) => (
+                        <SortableItem key={`item-${index}`} id={`item-${index}`}>
+                            <div className="p-4 bg-background rounded-lg border border-white/10 space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs text-muted select-none">Drag to reorder</span>
+                                    <RemoveButton onClick={() => onRemove([sectionKey], index)}>Remove Item</RemoveButton>
+                                </div>
+                                {Object.keys(item).map(key => (
+                                    <div key={key}>
+                                        <label className="capitalize text-sm text-muted block mb-1">{key}</label>
+                                        <FormInput value={item[key]} onChange={e => onUpdateField(index, key, e.target.value)} />
+                                    </div>
+                                ))}
+                            </div>
+                        </SortableItem>
+                    ))}
+                </SortableContext>
+            </DndContext>
+            <AddButton onClick={onAdd}>Add {sectionKey.slice(0, -1)}</AddButton>
         </div>
     );
 }

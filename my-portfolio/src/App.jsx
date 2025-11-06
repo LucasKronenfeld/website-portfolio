@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import WindowWrapper from "./components/ui/WindowWrapper";
+import Footer from "./components/ui/Footer";
 import "./index.css";
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
           <Outlet />
         </WindowWrapper>
       </main>
+      <Footer />
     </div>
   );
 }

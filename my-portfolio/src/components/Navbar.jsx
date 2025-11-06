@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import Icon from "./ui/Icon";
+import { getSiteLinks } from "../siteLinks";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,14 +34,15 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
+          {(() => { const links = getSiteLinks(); return null; })()}
           <div className="hidden lg:flex items-center space-x-4 xl:space-x-6">
-            <a href="mailto:kronenfeldlucas@gmail.com" className="text-muted hover:text-primary transition-colors" title="Email">
+            <a href={`mailto:${getSiteLinks().email}`} className="text-muted hover:text-primary transition-colors" title="Email">
               <Icon name="mail" className="w-5 h-5 xl:w-6 xl:h-6" />
             </a>
-            <a href="https://www.linkedin.com/in/lucas-kronenfeld-872040269/" target="_blank" rel="noopener noreferrer" className="text-muted hover:text-primary transition-colors" title="LinkedIn">
+            <a href={getSiteLinks().linkedin} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-primary transition-colors" title="LinkedIn">
               <Icon name="user" className="w-5 h-5 xl:w-6 xl:h-6" />
             </a>
-            <a href="https://github.com/LucasKronenfeld" target="_blank" rel="noopener noreferrer" className="text-muted hover:text-primary transition-colors" title="GitHub">
+            <a href={getSiteLinks().github} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-primary transition-colors" title="GitHub">
               <Icon name="code" className="w-5 h-5 xl:w-6 xl:h-6" />
             </a>
             <Link to="/admin" className="text-muted hover:text-primary transition-colors" title="Admin">
@@ -77,14 +79,14 @@ export default function Navbar() {
             ))}
             <div className="flex justify-center space-x-8 sm:space-x-10 pt-6 border-t border-white/10 w-full max-w-sm">
               <a 
-                href="mailto:kronenfeldlucas@gmail.com" 
+                href={`mailto:${getSiteLinks().email}`} 
                 className="text-muted hover:text-primary transition-colors"
                 title="Email"
               >
                 <Icon name="mail" className="w-8 h-8 sm:w-10 sm:h-10" />
               </a>
               <a 
-                href="https://www.linkedin.com/in/lucas-kronenfeld-872040269/" 
+                href={getSiteLinks().linkedin} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="text-muted hover:text-primary transition-colors"
@@ -93,7 +95,7 @@ export default function Navbar() {
                 <Icon name="user" className="w-8 h-8 sm:w-10 sm:h-10" />
               </a>
               <a 
-                href="https://github.com/LucasKronenfeld" 
+                href={getSiteLinks().github} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="text-muted hover:text-primary transition-colors"

@@ -1,16 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { db } from './firebaseConfig';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import ImageUpload from './components/ImageUpload';
 import { FaStar } from 'react-icons/fa';
 
-const MAX_FEATURED_PROJECTS = 3;
-const MAX_FEATURED_PORTFOLIO = 3;
+const MAX_FEATURED_PROJECTS = 4;
+const MAX_FEATURED_PORTFOLIO = 4;
 
 export default function AdminFeatured() {
   const [projectsData, setProjectsData] = useState({});
   const [portfolioData, setPortfolioData] = useState({});
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [homeSettings, setHomeSettings] = useState({
+    bio_short: '',
+    featured_role: '',
+    featured_university: '',
+    featured_hobbies: [], // array of { iconUrl, label }
+    featured_quote: '',
+    now_learning: [],
+    location: '',
+  });
+  const [homeSaveMsg, setHomeSaveMsg] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
@@ -20,6 +31,24 @@ export default function AdminFeatured() {
 
       const portfolioSnap = await getDoc(doc(db, 'portfolio', 'data'));
       if (portfolioSnap.exists()) setPortfolioData(portfolioSnap.data());
+
+      const homeSnap = await getDoc(doc(db, 'site', 'home'));
+      if (homeSnap.exists()) {
+        const data = homeSnap.data();
+        const hobbies = Array.isArray(data.featured_hobbies) ? data.featured_hobbies.map(h => {
+          if (typeof h === 'string') return { label: h, iconUrl: '' };
+          return { label: h.label || '', iconUrl: h.iconUrl || h.icon || '' };
+        }) : [];
+        setHomeSettings({
+          bio_short: data.bio_short || '',
+          featured_role: data.featured_role || '',
+          featured_university: data.featured_university || '',
+          featured_hobbies: hobbies,
+          featured_quote: data.featured_quote || '',
+          now_learning: Array.isArray(data.now_learning) ? data.now_learning : [],
+          location: data.location || '',
+        });
+      }
 
     } catch (error) {
       setMessage('Error fetching data: ' + error.message);
@@ -100,6 +129,162 @@ export default function AdminFeatured() {
     </div>
   );
 
+  const handleFieldChange = (field, value) => {
+    setHomeSettings(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleArrayChange = (field, index, value) => {
+    setHomeSettings(prev => {
+      const arr = Array.isArray(prev[field]) ? [...prev[field]] : [];
+      arr[index] = value;
+      return { ...prev, [field]: arr };
+    });
+  };
+
+  const handleArrayAdd = (field, emptyValue = '') => {
+    setHomeSettings(prev => ({
+      ...prev,
+      [field]: [...(prev[field] || []), emptyValue]
+    }));
+  };
+
+  const handleArrayRemove = (field, index) => {
+    setHomeSettings(prev => {
+      const arr = Array.isArray(prev[field]) ? [...prev[field]] : [];
+      arr.splice(index, 1);
+      return { ...prev, [field]: arr };
+    });
+  };
+
+  const handleLinkChange = (index, key, value) => {
+    // No-op: featured_links removed
+  };
+
+  const saveHomeSettings = async () => {
+    try {
+      const ref = doc(db, 'site', 'home');
+      await setDoc(ref, homeSettings, { merge: true });
+      setHomeSaveMsg('Saved!');
+      setTimeout(() => setHomeSaveMsg(''), 2500);
+    } catch (error) {
+      setHomeSaveMsg('Error: ' + error.message);
+    }
+  };
+
+  const renderHomepageSettings = () => (
+    <div className="space-y-4">
+      <h3 className="text-xl font-bold text-text">Homepage Content</h3>
+      <div className="p-4 bg-background rounded-md border border-white/10 space-y-4">
+        <div>
+          <label className="block text-sm text-muted mb-1">Featured Role</label>
+          <input
+            type="text"
+            value={homeSettings.featured_role}
+            onChange={(e) => handleFieldChange('featured_role', e.target.value)}
+            className="w-full bg-surface border border-white/10 rounded px-3 py-2 text-text"
+            placeholder="e.g., Full-Stack Developer"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-muted mb-1">University</label>
+          <input
+            type="text"
+            value={homeSettings.featured_university}
+            onChange={(e) => handleFieldChange('featured_university', e.target.value)}
+            className="w-full bg-surface border border-white/10 rounded px-3 py-2 text-text"
+            placeholder="e.g., University of XYZ"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-muted mb-1">Location</label>
+          <input
+            type="text"
+            value={homeSettings.location}
+            onChange={(e) => handleFieldChange('location', e.target.value)}
+            className="w-full bg-surface border border-white/10 rounded px-3 py-2 text-text"
+            placeholder="e.g., Columbus, OH"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-muted mb-1">Short Bio</label>
+          <textarea
+            value={homeSettings.bio_short}
+            onChange={(e) => handleFieldChange('bio_short', e.target.value)}
+            className="w-full bg-surface border border-white/10 rounded px-3 py-2 text-text min-h-[88px]"
+            placeholder="A one or two-sentence bio for the homepage"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-muted mb-1">Quote</label>
+          <input
+            type="text"
+            value={homeSettings.featured_quote}
+            onChange={(e) => handleFieldChange('featured_quote', e.target.value)}
+            className="w-full bg-surface border border-white/10 rounded px-3 py-2 text-text"
+            placeholder="Optional personal quote"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-muted mb-2">Hobbies / Interests</label>
+          <div className="space-y-3">
+            {(homeSettings.featured_hobbies || []).map((hob, idx) => (
+              <div key={idx} className="grid grid-cols-1 sm:grid-cols-5 gap-2 items-start">
+                <div className="sm:col-span-2">
+                  <ImageUpload 
+                    currentUrl={hob?.iconUrl || ''}
+                    onUploadComplete={(url) => handleArrayChange('featured_hobbies', idx, { ...(hob || {}), iconUrl: url })}
+                    folder="hobbies"
+                    label="Icon Image"
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={hob?.label || ''}
+                  onChange={(e) => handleArrayChange('featured_hobbies', idx, { ...(hob || {}), label: e.target.value })}
+                  className="sm:col-span-3 bg-surface border border-white/10 rounded px-3 py-2 text-text"
+                  placeholder="Hobby label"
+                />
+                <div className="sm:col-span-5 flex justify-end">
+                  <button type="button" onClick={() => handleArrayRemove('featured_hobbies', idx)} className="px-3 py-2 bg-red-600/20 text-red-300 rounded border border-red-600/30">Remove</button>
+                </div>
+              </div>
+            ))}
+            <button type="button" onClick={() => handleArrayAdd('featured_hobbies', { iconUrl: '', label: '' })} className="px-3 py-2 bg-primary/20 text-primary rounded border border-primary/30">+ Add Hobby</button>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm text-muted mb-2">Now Learning</label>
+          <div className="space-y-2">
+            {(homeSettings.now_learning || []).map((item, idx) => (
+              <div key={idx} className="flex gap-2">
+                <input
+                  type="text"
+                  value={item}
+                  onChange={(e) => handleArrayChange('now_learning', idx, e.target.value)}
+                  className="flex-1 bg-surface border border-white/10 rounded px-3 py-2 text-text"
+                  placeholder="e.g., Rust, Three.js, ML basics"
+                />
+                <button type="button" onClick={() => handleArrayRemove('now_learning', idx)} className="px-3 py-2 bg-red-600/20 text-red-300 rounded border border-red-600/30">Remove</button>
+              </div>
+            ))}
+            <button type="button" onClick={() => handleArrayAdd('now_learning', '')} className="px-3 py-2 bg-primary/20 text-primary rounded border border-primary/30">+ Add Item</button>
+          </div>
+        </div>
+
+        {/* featured_interests and featured_links removed per request */}
+
+        <div className="pt-2 flex items-center gap-3">
+          <button onClick={saveHomeSettings} className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90">Save Homepage Content</button>
+          {homeSaveMsg && (
+            <span className={`text-sm ${homeSaveMsg.startsWith('Error') ? 'text-red-300' : 'text-green-300'}`}>{homeSaveMsg}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   if (loading) return <div className="text-center text-muted">Loading featured content...</div>;
 
   return (
@@ -111,6 +296,7 @@ export default function AdminFeatured() {
         {renderSection('Projects', projectsData, 'projects')}
         {renderSection('Portfolio', portfolioData, 'portfolio')}
       </div>
+      {renderHomepageSettings()}
     </div>
   );
 }
