@@ -19,6 +19,7 @@ export default function AdminPosts() {
   const [message, setMessage] = useState('');
   const [posts, setPosts] = useState([]);
   const [editing, setEditing] = useState(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     fetchPosts();
@@ -53,6 +54,7 @@ export default function AdminPosts() {
         content, 
         coverImage,
         galleryImages,
+        archived: false,
         createdAt: new Date(), 
         authorId: user.uid 
       });
@@ -97,8 +99,20 @@ export default function AdminPosts() {
     }
   };
 
+  const handleArchiveToggle = async (post) => {
+    try {
+      const postRef = doc(db, 'posts', post.id);
+      const newArchived = !post.archived;
+      await updateDoc(postRef, { archived: newArchived });
+      setMessage(newArchived ? 'Post archived.' : 'Post restored.');
+      fetchPosts();
+    } catch (error) {
+      setMessage('Error toggling archive: ' + error.message);
+    }
+  };
+
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
+    if (!confirm('Are you sure you want to permanently delete this post?')) return;
     try {
       await deleteDoc(doc(db, 'posts', id));
       setMessage('Post deleted successfully!');
@@ -176,14 +190,33 @@ export default function AdminPosts() {
         </form>
         
         <div className="space-y-4">
-            <h3 className="text-xl font-semibold text-text">Existing Posts</h3>
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-semibold text-text">Existing Posts</h3>
+              <button
+                type="button"
+                onClick={() => setShowArchived(!showArchived)}
+                className="px-3 py-1 text-sm rounded border border-white/20 text-muted hover:text-text hover:bg-white/10 transition"
+              >
+                {showArchived ? 'Show Active' : 'Show Archived'}
+              </button>
+            </div>
             <div className="space-y-2">
-              {posts.map((p) => (
-                  <div key={p.id} className="flex justify-between items-center bg-background text-text p-3 rounded-lg border border-white/10">
-                      <span className="text-text">{p.title}</span>
+              {posts.filter(p => showArchived ? p.archived : !p.archived).map((p) => (
+                  <div key={p.id} className={`flex justify-between items-center bg-background text-text p-3 rounded-lg border ${p.archived ? 'border-yellow-600/30 opacity-70' : 'border-white/10'}`}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-text">{p.title}</span>
+                        {p.archived && <span className="text-xs px-2 py-0.5 bg-yellow-600/20 text-yellow-400 rounded">Archived</span>}
+                      </div>
                       {auth.currentUser?.uid === p.authorId && (
-                      <div className="space-x-2">
+                      <div className="space-x-2 flex-shrink-0">
                           <SecondaryButton onClick={() => startEdit(p)}>Edit</SecondaryButton>
+                          <button
+                            type="button"
+                            onClick={() => handleArchiveToggle(p)}
+                            className={`px-3 py-1 rounded text-sm transition ${p.archived ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-yellow-600 text-white hover:bg-yellow-700'}`}
+                          >
+                            {p.archived ? 'Restore' : 'Archive'}
+                          </button>
                           <DangerButton onClick={() => handleDelete(p.id)}>Delete</DangerButton>
                       </div>
                       )}

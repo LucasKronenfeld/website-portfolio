@@ -6,6 +6,7 @@ import StructuredHero from './components/StructuredHero';
 import SectionDivider from './components/ui/SectionDivider';
 import DesktopIcon from './components/ui/DesktopIcon';
 import { Link } from 'react-router-dom';
+import { isExternalUrl, normalizeExternalUrl } from './utils/normalizeExternalUrl';
 import Window from './components/ui/Window';
 import PixelProgress from './components/ui/PixelProgress';
 import TerminalList from './components/ui/TerminalList';
@@ -208,13 +209,23 @@ export default function Home() {
             viewport={{ once: true, amount: 0.2 }}
             variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
           >
-            {featuredContent.map(item => (
+            {featuredContent.map(item => {
+              const external = isExternalUrl(item.link);
+              const safeLink = normalizeExternalUrl(item.link);
+              return (
               <motion.div key={item.id} variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }} className="flex flex-col items-center">
-                <Link to={item.link} className="focus:outline-none">
-                  <DesktopIcon label={item.title} src={item.image} />
-                </Link>
+                {external ? (
+                  <a href={safeLink} target="_blank" rel="noopener noreferrer" className="focus:outline-none">
+                    <DesktopIcon label={item.title} src={item.image} />
+                  </a>
+                ) : (
+                  <Link to={item.link} className="focus:outline-none">
+                    <DesktopIcon label={item.title} src={item.image} />
+                  </Link>
+                )}
               </motion.div>
-            ))}
+              );
+            })}
           </motion.div>
         ) : (
           <div className="text-center text-muted py-6 px-4">

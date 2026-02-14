@@ -58,12 +58,12 @@ export default function BlogPost() {
 
   return (
     <motion.div
-      className="min-h-screen bg-background text-text pt-20 sm:pt-24"
+      className="min-h-screen bg-background text-text"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-4xl">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-4xl">
         {/* Back Button */}
         <button
           onClick={() => navigate('/blog')}

@@ -1,11 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { db } from './firebaseConfig';
+import { db, storage } from './firebaseConfig';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
 
 // --- Shared Form Components ---
 const FormInput = (props) => <input {...props} className="w-full p-2 bg-background border border-white/20 rounded-md text-text focus:ring-primary focus:border-primary" />;
@@ -15,20 +24,28 @@ const RemoveButton = ({ children, ...props }) => <button type="button" {...props
 const SaveButton = ({ children, ...props }) => <button {...props} className="px-6 py-2 bg-primary text-white font-bold rounded-lg hover:bg-opacity-90 transition-colors">{children}</button>;
 
 const initialResumeData = { "Summary": "", "Work Experience": [], "Projects": [], "Skills": {}, "Education": [], "Relevant Coursework": {}, "Volunteer Work": [] };
-const orderedSections = ["Summary", "Work Experience", "Projects", "Skills", "Education", "Relevant Coursework", "Volunteer Work"];
+const orderedSections = ["1-Page Resume PDF", "Summary", "Work Experience", "Projects", "Skills", "Education", "Relevant Coursework", "Volunteer Work"];
 
 export default function AdminResume() {
     const [resumeData, setResumeData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
-    const [activeSection, setActiveSection] = useState('Summary');
+    const [activeSection, setActiveSection] = useState('1-Page Resume PDF');
+    const [pdfUrl, setPdfUrl] = useState('');
+    const [uploadingPdf, setUploadingPdf] = useState(false);
+    const [pdfError, setPdfError] = useState('');
+    const [pdfNumPages, setPdfNumPages] = useState(0);
+    const [pdfWidth, setPdfWidth] = useState(600);
+    const pdfContainerRef = useRef(null);
 
     useEffect(() => {
         const fetchResumeData = async () => {
             const docRef = doc(db, 'resume', 'data');
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
-                setResumeData(docSnap.data());
+                const data = docSnap.data();
+                setResumeData(data);
+                setPdfUrl(data.pdfUrl || '');
             } else {
                 await setDoc(docRef, initialResumeData);
                 setResumeData(initialResumeData);
@@ -42,7 +59,7 @@ export default function AdminResume() {
         e.preventDefault();
         setMessage('Updating...');
         try {
-            await updateDoc(doc(db, 'resume', 'data'), resumeData);
+            await updateDoc(doc(db, 'resume', 'data'), { ...resumeData, pdfUrl });
             setMessage('Resume updated successfully!');
         } catch (error) {
             setMessage('Error updating resume.');
@@ -71,7 +88,114 @@ export default function AdminResume() {
         updateNestedState(path, currentItems.filter((_, i) => i !== index));
     };
 
+    const handlePdfUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.type !== 'application/pdf') {
+            setPdfError('Please upload a PDF file.');
+            return;
+        }
+        setUploadingPdf(true);
+        setPdfError('');
+        try {
+            const storageRef = ref(storage, 'resume/one-page-resume.pdf');
+            await uploadBytes(storageRef, file);
+            const downloadURL = await getDownloadURL(storageRef);
+            setPdfUrl(downloadURL);
+            await updateDoc(doc(db, 'resume', 'data'), { pdfUrl: downloadURL });
+            setMessage('PDF uploaded successfully!');
+        } catch (err) {
+            console.error('PDF upload error:', err);
+            setPdfError('Error uploading PDF: ' + err.message);
+        } finally {
+            setUploadingPdf(false);
+        }
+    };
+
+    const handlePdfRemove = async () => {
+        try {
+            const storageRef = ref(storage, 'resume/one-page-resume.pdf');
+            await deleteObject(storageRef);
+            setPdfUrl('');
+            await updateDoc(doc(db, 'resume', 'data'), { pdfUrl: '' });
+            setMessage('PDF removed.');
+        } catch (err) {
+            console.error('PDF delete error:', err);
+            setPdfError('Error removing PDF: ' + err.message);
+        }
+    };
+
+    useEffect(() => {
+        if (!pdfContainerRef.current || typeof ResizeObserver === 'undefined') return;
+        const observer = new ResizeObserver((entries) => {
+            const width = entries[0]?.contentRect?.width;
+            if (width) setPdfWidth(Math.floor(width));
+        });
+        observer.observe(pdfContainerRef.current);
+        return () => observer.disconnect();
+    }, [pdfUrl]);
+
     const renderSectionEditor = () => {
+        if (activeSection === '1-Page Resume PDF') {
+            return (
+                <div className="space-y-4 overflow-hidden" ref={pdfContainerRef}>
+                    <p className="text-sm text-muted">Upload a 1-page PDF resume. This will be displayed at the top of your Resume page.</p>
+                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                        <label className="flex-1">
+                            <input
+                                type="file"
+                                accept="application/pdf"
+                                onChange={handlePdfUpload}
+                                disabled={uploadingPdf}
+                                className="block w-full text-sm text-muted file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-opacity-90 disabled:opacity-50"
+                            />
+                        </label>
+                        <div className="flex gap-2 flex-shrink-0">
+                            {pdfUrl && (
+                                <>
+                                    <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition">
+                                        Open PDF
+                                    </a>
+                                    <button
+                                        type="button"
+                                        onClick={handlePdfRemove}
+                                        className="px-3 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition"
+                                    >
+                                        Remove
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                    {uploadingPdf && <p className="text-sm text-blue-400">Uploading PDF...</p>}
+                    {pdfError && <p className="text-sm text-red-400">{pdfError}</p>}
+                    {pdfUrl && (
+                        <div className="mt-2">
+                            <p className="text-sm text-green-400 mb-3">&#10003; PDF uploaded</p>
+                            <Document
+                                file={pdfUrl}
+                                onLoadSuccess={({ numPages }) => setPdfNumPages(numPages)}
+                                loading={<p className="text-muted">Loading PDF preview...</p>}
+                                error={<p className="text-red-400">Could not load PDF preview.</p>}
+                            >
+                                {Array.from({ length: pdfNumPages }, (_, i) => (
+                                    <div key={`admin-page-${i + 1}`} className="flex justify-center mb-4">
+                                        <Page
+                                            pageNumber={i + 1}
+                                            width={pdfWidth - 2}
+                                            renderTextLayer={false}
+                                            renderAnnotationLayer={false}
+                                            className="rounded border border-white/10 shadow-sm [&_canvas]:!w-full [&_canvas]:!h-auto"
+                                        />
+                                    </div>
+                                ))}
+                            </Document>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         const data = resumeData[activeSection];
         switch (activeSection) {
             case 'Summary':

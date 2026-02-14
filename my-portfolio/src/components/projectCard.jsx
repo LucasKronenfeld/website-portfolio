@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion';
+import { normalizeExternalUrl } from '../utils/normalizeExternalUrl';
 
 const ProjectCard = ({ imageSrc, title, description, link }) => {
+  const safeLink = normalizeExternalUrl(link);
   return (
     <motion.a
-      href={link}
+      href={safeLink}
       target="_blank"
       rel="noopener noreferrer"
       className="relative w-full h-full rounded-lg overflow-hidden shadow-lg group block"

@@ -6,6 +6,7 @@ import FeatureRow from "./components/FeatureRow";
 
 export default function Projects() {
   const [projectsData, setProjectsData] = useState(null);
+  const [categoryOrder, setCategoryOrder] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(null);
 
@@ -16,14 +17,14 @@ export default function Projects() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
-          setProjectsData(data);
-          if (Object.keys(data).length > 0) {
-            // Set "Computer Science" as default tab if it exists, otherwise use first category
-            if (data["Computer Science"]) {
-              setActiveTab("Computer Science");
-            } else {
-              setActiveTab(Object.keys(data)[0]);
-            }
+          const order = data._categoryOrder || Object.keys(data).filter(k => k !== '_categoryOrder');
+          const { _categoryOrder: _, ...categories } = data;
+          setCategoryOrder(order);
+          setProjectsData(categories);
+          if (order.length > 0) {
+            setActiveTab(order[0]);
+          } else if (Object.keys(categories).length > 0) {
+            setActiveTab(Object.keys(categories)[0]);
           }
         } else {
           setProjectsData({});
@@ -38,13 +39,8 @@ export default function Projects() {
     fetchProjectsData();
   }, []);
 
-  const categories = projectsData ? Object.keys(projectsData).sort((a, b) => {
-    // Put "Computer Science" first
-    if (a === "Computer Science") return -1;
-    if (b === "Computer Science") return 1;
-    return a.localeCompare(b); // Alphabetical for others
-  }) : [];
-  const activeProjects = activeTab && projectsData ? projectsData[activeTab] : [];
+  const categories = categoryOrder.filter(cat => projectsData && projectsData[cat]);
+  const activeProjects = activeTab && projectsData ? (projectsData[activeTab] || []).filter(p => !p.archived) : [];
 
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen bg-background text-text"><div className="text-xl font-semibold">Loading Projects...</div></div>;
@@ -52,12 +48,12 @@ export default function Projects() {
 
   return (
     <motion.div 
-      className="min-h-screen bg-background pt-20 sm:pt-24"
+      className="min-h-screen bg-background"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
     >
-      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <motion.div 
           className="text-center mb-8 sm:mb-12"
           initial={{ y: -20, opacity: 0 }}

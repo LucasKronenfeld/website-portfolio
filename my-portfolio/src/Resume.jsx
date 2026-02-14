@@ -1,11 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { db } from "./firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
+import { normalizeExternalUrl } from "./utils/normalizeExternalUrl";
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 const sections = [
-  "Full Resume", "Summary", "Work Experience", "Projects", "Skills", "Education", "Relevant Coursework", "Volunteer Work"
+  "1 Page Resume", "Full Resume", "Summary", "Work Experience", "Projects", "Skills", "Education", "Relevant Coursework", "Volunteer Work"
 ];
+
+const contentSections = sections.filter(
+  (section) => section !== "1 Page Resume" && section !== "Full Resume"
+);
 
 const SectionContent = ({ section, data }) => {
   if (!data) return <p className="text-muted text-sm sm:text-base">No data available for this section.</p>;
@@ -13,7 +26,9 @@ const SectionContent = ({ section, data }) => {
   if (section === "Projects") {
     return (
       <div className="space-y-3 sm:space-y-4">
-        {data.map((project, index) => (
+        {data.map((project, index) => {
+          const safeLink = normalizeExternalUrl(project.link);
+          return (
           <motion.div 
             key={index} 
             className="p-3 sm:p-4 bg-background rounded-lg border border-white/10 transition-colors hover:bg-surface"
@@ -22,13 +37,14 @@ const SectionContent = ({ section, data }) => {
           >
             <h3 className="text-base sm:text-lg font-semibold text-primary">{project.title}</h3>
             <p className="text-muted mt-1 text-sm sm:text-base">{project.description}</p>
-            {project.link && (
-              <a href={project.link} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline mt-2 inline-block text-sm sm:text-base">
+            {safeLink && (
+              <a href={safeLink} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline mt-2 inline-block text-sm sm:text-base">
                 View Project &rarr;
               </a>
             )}
           </motion.div>
-        ))}
+          );
+        })}
       </div>
     );
   }
@@ -87,8 +103,12 @@ const SectionContent = ({ section, data }) => {
 };
 
 export default function Resume() {
-  const [activeSection, setActiveSection] = useState("Full Resume");
+  const [activeSection, setActiveSection] = useState("1 Page Resume");
   const [resumeData, setResumeData] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState('');
+  const [numPages, setNumPages] = useState(0);
+  const [pageWidth, setPageWidth] = useState(800);
+  const pdfContainerRef = useRef(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -97,7 +117,9 @@ export default function Resume() {
         const docRef = doc(db, 'resume', 'data');
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setResumeData(docSnap.data());
+          const data = docSnap.data();
+          setResumeData(data);
+          setPdfUrl(data.pdfUrl || '');
         } else {
           console.log("No resume data found.");
           setResumeData({});
@@ -111,6 +133,18 @@ export default function Resume() {
     fetchResumeData();
   }, []);
 
+  useEffect(() => {
+    if (!pdfContainerRef.current || typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect?.width;
+      if (width) setPageWidth(Math.floor(width));
+    });
+
+    observer.observe(pdfContainerRef.current);
+    return () => observer.disconnect();
+  }, [pdfUrl]);
+
   if (loading || !resumeData) {
     return <div className="min-h-screen bg-background flex items-center justify-center text-text px-4">
       <div className="text-lg sm:text-xl font-semibold">Loading Resume...</div>
@@ -118,8 +152,8 @@ export default function Resume() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-text pt-20 sm:pt-24">
-      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col lg:flex-row gap-6 sm:gap-8">
+    <div className="min-h-screen bg-background text-text">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col lg:flex-row gap-6 sm:gap-8">
         <aside className="w-full lg:w-1/4">
           <div className="lg:sticky lg:top-28">
             <h2 className="text-lg sm:text-xl font-bold text-text mb-3 sm:mb-4">Sections</h2>
@@ -148,9 +182,44 @@ export default function Resume() {
               transition={{ duration: 0.3 }}
             >
               <h1 className="text-2xl sm:text-3xl font-bold text-text mb-4 sm:mb-6 border-b border-white/10 pb-3 sm:pb-4">{activeSection}</h1>
-              {activeSection === "Full Resume" ? (
+              {activeSection === "1 Page Resume" ? (
+                pdfUrl ? (
+                  <div className="space-y-4" ref={pdfContainerRef}>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                      <p className="text-muted text-sm">View or download my 1-page resume below.</p>
+                      <a
+                        href={pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition text-sm flex-shrink-0"
+                      >
+                        Download PDF
+                      </a>
+                    </div>
+                    <Document
+                      file={pdfUrl}
+                      onLoadSuccess={({ numPages: nextNumPages }) => setNumPages(nextNumPages)}
+                      loading={<p className="text-muted">Loading PDF...</p>}
+                      error={<p className="text-red-400">Could not load PDF.</p>}
+                    >
+                      {Array.from({ length: numPages }, (_, index) => (
+                        <Page
+                          key={`page_${index + 1}`}
+                          pageNumber={index + 1}
+                          width={pageWidth > 32 ? pageWidth - 32 : pageWidth}
+                          renderTextLayer={false}
+                          renderAnnotationLayer={false}
+                          className="rounded border border-white/10 shadow-sm mb-6 mx-auto"
+                        />
+                      ))}
+                    </Document>
+                  </div>
+                ) : (
+                  <p className="text-muted">No PDF resume uploaded yet.</p>
+                )
+              ) : activeSection === "Full Resume" ? (
                 <div className="space-y-6 sm:space-y-8">
-                  {sections.slice(1).map(sec => (
+                  {contentSections.map(sec => (
                     <section key={sec}>
                       <h2 className="text-xl sm:text-2xl font-bold text-text mb-3 sm:mb-4">{sec}</h2>
                       <SectionContent section={sec} data={resumeData[sec]} />

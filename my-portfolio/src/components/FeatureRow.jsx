@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion';
+import { normalizeExternalUrl } from '../utils/normalizeExternalUrl';
 
 export default function FeatureRow({ item, index }) {
   const isReversed = index % 2 !== 0;
+  const safeLink = normalizeExternalUrl(item.link);
 
   // Animation for the container to trigger when it comes into view
   const containerVariants = {
@@ -52,9 +54,9 @@ export default function FeatureRow({ item, index }) {
       <motion.div className="w-full md:w-1/2 px-4 sm:px-0" variants={textVariants}>
         <h3 className="text-2xl sm:text-3xl font-bold text-primary mb-3 sm:mb-4">{item.title}</h3>
         <p className="text-base sm:text-lg text-muted mb-4 sm:mb-6 leading-relaxed">{item.description}</p>
-        {item.link && (
+        {safeLink && (
           <a
-            href={item.link}
+            href={safeLink}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block px-4 sm:px-5 py-2 bg-secondary text-white rounded-lg font-semibold hover:bg-opacity-90 transition-all text-sm sm:text-base"

@@ -42,7 +42,7 @@ function SortableProjectItem({ id, item, index, activeCategory, updateState, pro
         <div 
             ref={setNodeRef} 
             style={style} 
-            className="p-4 bg-background rounded-lg border border-white/10 space-y-3"
+            className={`p-4 bg-background rounded-lg border space-y-3 ${item.archived ? 'border-yellow-600/30 opacity-70' : 'border-white/10'}`}
         >
             <div className="flex justify-between items-center gap-3">
                 <button
@@ -58,7 +58,15 @@ function SortableProjectItem({ id, item, index, activeCategory, updateState, pro
                 </button>
                 <h4 className="font-semibold text-lg text-primary flex-grow">
                     {item.title || `Item ${index + 1}`}
+                    {item.archived && <span className="text-xs ml-2 px-2 py-0.5 bg-yellow-600/20 text-yellow-400 rounded">Archived</span>}
                 </h4>
+                <button
+                    type="button"
+                    onClick={() => updateState([activeCategory, index, 'archived'], !item.archived)}
+                    className={`px-3 py-1 rounded text-sm transition ${item.archived ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-yellow-600 text-white hover:bg-yellow-700'}`}
+                >
+                    {item.archived ? 'Restore' : 'Archive'}
+                </button>
                 <RemoveButton 
                     onClick={() => updateState([activeCategory], projectsData[activeCategory].filter((_, i) => i !== index))}
                 >
@@ -124,9 +132,11 @@ function SortableProjectItem({ id, item, index, activeCategory, updateState, pro
 
 export default function AdminProjects() {
     const [projectsData, setProjectsData] = useState(null);
+    const [categoryOrder, setCategoryOrder] = useState([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
     const [activeCategory, setActiveCategory] = useState(null);
+    const [showArchived, setShowArchived] = useState(false);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -141,11 +151,15 @@ export default function AdminProjects() {
             const docSnap = await getDoc(docRef);
             if (docSnap.exists() && Object.keys(docSnap.data()).length > 0) {
                 const data = docSnap.data();
-                setProjectsData(data);
-                if (!activeCategory) setActiveCategory(Object.keys(data)[0]);
+                const order = data._categoryOrder || Object.keys(data).filter(k => k !== '_categoryOrder');
+                setCategoryOrder(order);
+                const { _categoryOrder: _, ...categories } = data;
+                setProjectsData(categories);
+                if (!activeCategory) setActiveCategory(order[0] || Object.keys(categories)[0]);
             } else {
-                await setDoc(docRef, { "Computer Science": [] });
+                await setDoc(docRef, { "Computer Science": [], _categoryOrder: ["Computer Science"] });
                 setProjectsData({ "Computer Science": [] });
+                setCategoryOrder(["Computer Science"]);
                 setActiveCategory("Computer Science");
             }
             setLoading(false);
@@ -157,7 +171,7 @@ export default function AdminProjects() {
         e.preventDefault();
         setMessage('Updating...');
         try {
-            await updateDoc(doc(db, 'projects', 'data'), projectsData);
+            await updateDoc(doc(db, 'projects', 'data'), { ...projectsData, _categoryOrder: categoryOrder });
             setMessage('Projects updated successfully!');
         } catch (error) {
             setMessage('Error updating projects.');
@@ -180,6 +194,7 @@ export default function AdminProjects() {
         const newCat = prompt("Enter new category name:");
         if (newCat && !projectsData[newCat]) {
             updateState([newCat], []);
+            setCategoryOrder(prev => [...prev, newCat]);
             setActiveCategory(newCat);
         }
     };
@@ -188,12 +203,33 @@ export default function AdminProjects() {
         if (!confirm(`Are you sure you want to remove the category "${catToRemove}" and all its items?`)) return;
         const { [catToRemove]: _, ...rest } = projectsData;
         setProjectsData(rest);
+        setCategoryOrder(prev => prev.filter(c => c !== catToRemove));
         const remainingCats = Object.keys(rest);
         setActiveCategory(remainingCats.length > 0 ? remainingCats[0] : null);
     };
 
+    const moveCategoryLeft = () => {
+        const idx = categoryOrder.indexOf(activeCategory);
+        if (idx <= 0) return;
+        setCategoryOrder(prev => {
+            const next = [...prev];
+            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+            return next;
+        });
+    };
+
+    const moveCategoryRight = () => {
+        const idx = categoryOrder.indexOf(activeCategory);
+        if (idx < 0 || idx >= categoryOrder.length - 1) return;
+        setCategoryOrder(prev => {
+            const next = [...prev];
+            [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+            return next;
+        });
+    };
+
     const handleAddItem = (category) => {
-        const newItem = { title: "", description: "", imageSrc: "", link: "", featured: false, inProgress: false, progress: 0 };
+        const newItem = { title: "", description: "", imageSrc: "", link: "", featured: false, inProgress: false, progress: 0, archived: false };
         const currentItems = projectsData[category] || [];
         updateState([category], [...currentItems, newItem]);
     };
@@ -240,16 +276,49 @@ export default function AdminProjects() {
             </div>
              {message && <p className="text-center p-3 rounded-md text-green-300 bg-green-900/50 text-sm">{message}</p>}
 
-            <div className="border-b border-white/10 flex justify-between items-center gap-4">
-                <nav className="flex-grow flex space-x-2" aria-label="Category Tabs">
-                    {projectsData && Object.keys(projectsData).map((cat) => (
-                        <TabButton key={cat} active={activeCategory === cat} onClick={() => setActiveCategory(cat)}>
-                            {cat}
-                        </TabButton>
-                    ))}
-                </nav>
-                 <AddButton onClick={handleAddCategory}>Add Category</AddButton>
-                 {activeCategory && <RemoveButton onClick={() => handleRemoveCategory(activeCategory)}>Remove '{activeCategory}'</RemoveButton>}
+            <div className="border-b border-white/10 space-y-2">
+                <div className="flex items-center gap-4 flex-wrap">
+                    <nav className="flex-grow flex space-x-2 overflow-x-auto" aria-label="Category Tabs">
+                        {categoryOrder.filter(cat => projectsData && projectsData[cat]).map((cat) => (
+                            <TabButton key={cat} active={activeCategory === cat} onClick={() => setActiveCategory(cat)}>
+                                {cat}
+                            </TabButton>
+                        ))}
+                    </nav>
+                    <button
+                        type="button"
+                        onClick={() => setShowArchived(!showArchived)}
+                        className="px-3 py-1 text-sm rounded border border-white/20 text-muted hover:text-text hover:bg-white/10 transition whitespace-nowrap"
+                    >
+                        {showArchived ? 'Show Active' : 'Show Archived'}
+                    </button>
+                    <AddButton onClick={handleAddCategory}>Add Category</AddButton>
+                    {activeCategory && <RemoveButton onClick={() => handleRemoveCategory(activeCategory)}>Remove '{activeCategory}'</RemoveButton>}
+                </div>
+                {activeCategory && (
+                    <div className="flex items-center gap-2 pb-2">
+                        <span className="text-xs text-muted">Reorder:</span>
+                        <button
+                            type="button"
+                            onClick={moveCategoryLeft}
+                            disabled={categoryOrder.indexOf(activeCategory) <= 0}
+                            className="px-2 py-1 text-xs rounded border border-white/20 text-muted hover:text-text hover:bg-white/10 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Move category left"
+                        >
+                            ← Left
+                        </button>
+                        <span className="text-xs text-primary font-medium">{activeCategory}</span>
+                        <button
+                            type="button"
+                            onClick={moveCategoryRight}
+                            disabled={categoryOrder.indexOf(activeCategory) >= categoryOrder.length - 1}
+                            className="px-2 py-1 text-xs rounded border border-white/20 text-muted hover:text-text hover:bg-white/10 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Move category right"
+                        >
+                            Right →
+                        </button>
+                    </div>
+                )}
             </div>
             
             <AnimatePresence mode="wait">
@@ -264,7 +333,9 @@ export default function AdminProjects() {
                                 items={projectsData[activeCategory].map((_, index) => `project-${index}`)}
                                 strategy={verticalListSortingStrategy}
                             >
-                                {projectsData[activeCategory].map((item, index) => (
+                                {projectsData[activeCategory].map((item, index) => {
+                                    if (showArchived ? !item.archived : item.archived) return null;
+                                    return (
                                     <SortableProjectItem
                                         key={`project-${index}`}
                                         id={`project-${index}`}
@@ -273,10 +344,11 @@ export default function AdminProjects() {
                                         activeCategory={activeCategory}
                                         updateState={updateState}
                                         projectsData={projectsData}
-                                        allCategories={Object.keys(projectsData)}
+                                        allCategories={categoryOrder.filter(cat => projectsData[cat])}
                                         moveItemToCategory={moveItemToCategory}
                                     />
-                                ))}
+                                    );
+                                })}
                             </SortableContext>
                         </DndContext>
                     ) : <p className="text-muted">Select a category to see its items.</p>}

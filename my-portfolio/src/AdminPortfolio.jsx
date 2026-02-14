@@ -41,7 +41,7 @@ function SortablePortfolioItem({ id, item, index, activeCategory, updateState, p
         <div 
             ref={setNodeRef} 
             style={style} 
-            className="p-4 bg-background rounded-lg border border-white/10 space-y-3"
+            className={`p-4 bg-background rounded-lg border space-y-3 ${item.archived ? 'border-yellow-600/30 opacity-70' : 'border-white/10'}`}
         >
             <div className="flex justify-between items-center gap-3">
                 <button
@@ -57,7 +57,15 @@ function SortablePortfolioItem({ id, item, index, activeCategory, updateState, p
                 </button>
                 <h4 className="font-semibold text-lg text-primary flex-grow">
                     {item.title || `Item ${index + 1}`}
+                    {item.archived && <span className="text-xs ml-2 px-2 py-0.5 bg-yellow-600/20 text-yellow-400 rounded">Archived</span>}
                 </h4>
+                <button
+                    type="button"
+                    onClick={() => updateState([activeCategory, index, 'archived'], !item.archived)}
+                    className={`px-3 py-1 rounded text-sm transition ${item.archived ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-yellow-600 text-white hover:bg-yellow-700'}`}
+                >
+                    {item.archived ? 'Restore' : 'Archive'}
+                </button>
                 <RemoveButton 
                     onClick={() => updateState([activeCategory], portfolioData[activeCategory].filter((_, i) => i !== index))}
                 >
@@ -96,9 +104,11 @@ function SortablePortfolioItem({ id, item, index, activeCategory, updateState, p
 
 export default function AdminPortfolio() {
     const [portfolioData, setPortfolioData] = useState(null);
+    const [categoryOrder, setCategoryOrder] = useState([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
     const [activeCategory, setActiveCategory] = useState(null);
+    const [showArchived, setShowArchived] = useState(false);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -113,11 +123,15 @@ export default function AdminPortfolio() {
             const docSnap = await getDoc(docRef);
             if (docSnap.exists() && Object.keys(docSnap.data()).length > 0) {
                 const data = docSnap.data();
-                setPortfolioData(data);
-                if (!activeCategory) setActiveCategory(Object.keys(data)[0]);
+                const order = data._categoryOrder || Object.keys(data).filter(k => k !== '_categoryOrder');
+                setCategoryOrder(order);
+                const { _categoryOrder: _, ...categories } = data;
+                setPortfolioData(categories);
+                if (!activeCategory) setActiveCategory(order[0] || Object.keys(categories)[0]);
             } else {
-                await setDoc(docRef, { "Example Category": [] });
+                await setDoc(docRef, { "Example Category": [], _categoryOrder: ["Example Category"] });
                 setPortfolioData({ "Example Category": [] });
+                setCategoryOrder(["Example Category"]);
                 setActiveCategory("Example Category");
             }
             setLoading(false);
@@ -129,7 +143,7 @@ export default function AdminPortfolio() {
         e.preventDefault();
         setMessage('Updating...');
         try {
-            await updateDoc(doc(db, 'portfolio', 'data'), portfolioData);
+            await updateDoc(doc(db, 'portfolio', 'data'), { ...portfolioData, _categoryOrder: categoryOrder });
             setMessage('Portfolio updated successfully!');
         } catch (error) {
             setMessage('Error updating portfolio.');
@@ -152,6 +166,7 @@ export default function AdminPortfolio() {
         const newCat = prompt("Enter new category name:");
         if (newCat && !portfolioData[newCat]) {
             updateState([newCat], []);
+            setCategoryOrder(prev => [...prev, newCat]);
             setActiveCategory(newCat);
         }
     };
@@ -160,12 +175,33 @@ export default function AdminPortfolio() {
         if (!confirm(`Are you sure you want to remove the category "${catToRemove}" and all its items?`)) return;
         const { [catToRemove]: _, ...rest } = portfolioData;
         setPortfolioData(rest);
+        setCategoryOrder(prev => prev.filter(c => c !== catToRemove));
         const remainingCats = Object.keys(rest);
         setActiveCategory(remainingCats.length > 0 ? remainingCats[0] : null);
     };
 
+    const moveCategoryLeft = () => {
+        const idx = categoryOrder.indexOf(activeCategory);
+        if (idx <= 0) return;
+        setCategoryOrder(prev => {
+            const next = [...prev];
+            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+            return next;
+        });
+    };
+
+    const moveCategoryRight = () => {
+        const idx = categoryOrder.indexOf(activeCategory);
+        if (idx < 0 || idx >= categoryOrder.length - 1) return;
+        setCategoryOrder(prev => {
+            const next = [...prev];
+            [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+            return next;
+        });
+    };
+
     const handleAddItem = (category) => {
-        const newItem = { title: "", description: "", imageUrl: "", featured: false };
+        const newItem = { title: "", description: "", imageUrl: "", featured: false, archived: false };
         const currentItems = portfolioData[category] || [];
         updateState([category], [...currentItems, newItem]);
     };
@@ -192,16 +228,49 @@ export default function AdminPortfolio() {
             </div>
              {message && <p className="text-center p-3 rounded-md text-green-300 bg-green-900/50 text-sm">{message}</p>}
 
-            <div className="border-b border-white/10 flex justify-between items-center gap-4">
-                <nav className="flex-grow flex space-x-2" aria-label="Category Tabs">
-                    {portfolioData && Object.keys(portfolioData).map((cat) => (
-                        <TabButton key={cat} active={activeCategory === cat} onClick={() => setActiveCategory(cat)}>
-                            {cat}
-                        </TabButton>
-                    ))}
-                </nav>
-                 <AddButton onClick={handleAddCategory}>Add Category</AddButton>
-                 {activeCategory && <RemoveButton onClick={() => handleRemoveCategory(activeCategory)}>Remove '{activeCategory}'</RemoveButton>}
+            <div className="border-b border-white/10 space-y-2">
+                <div className="flex items-center gap-4 flex-wrap">
+                    <nav className="flex-grow flex space-x-2 overflow-x-auto" aria-label="Category Tabs">
+                        {categoryOrder.filter(cat => portfolioData && portfolioData[cat]).map((cat) => (
+                            <TabButton key={cat} active={activeCategory === cat} onClick={() => setActiveCategory(cat)}>
+                                {cat}
+                            </TabButton>
+                        ))}
+                    </nav>
+                    <button
+                        type="button"
+                        onClick={() => setShowArchived(!showArchived)}
+                        className="px-3 py-1 text-sm rounded border border-white/20 text-muted hover:text-text hover:bg-white/10 transition whitespace-nowrap"
+                    >
+                        {showArchived ? 'Show Active' : 'Show Archived'}
+                    </button>
+                    <AddButton onClick={handleAddCategory}>Add Category</AddButton>
+                    {activeCategory && <RemoveButton onClick={() => handleRemoveCategory(activeCategory)}>Remove '{activeCategory}'</RemoveButton>}
+                </div>
+                {activeCategory && (
+                    <div className="flex items-center gap-2 pb-2">
+                        <span className="text-xs text-muted">Reorder:</span>
+                        <button
+                            type="button"
+                            onClick={moveCategoryLeft}
+                            disabled={categoryOrder.indexOf(activeCategory) <= 0}
+                            className="px-2 py-1 text-xs rounded border border-white/20 text-muted hover:text-text hover:bg-white/10 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Move category left"
+                        >
+                            ← Left
+                        </button>
+                        <span className="text-xs text-primary font-medium">{activeCategory}</span>
+                        <button
+                            type="button"
+                            onClick={moveCategoryRight}
+                            disabled={categoryOrder.indexOf(activeCategory) >= categoryOrder.length - 1}
+                            className="px-2 py-1 text-xs rounded border border-white/20 text-muted hover:text-text hover:bg-white/10 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                            title="Move category right"
+                        >
+                            Right →
+                        </button>
+                    </div>
+                )}
             </div>
             
             <AnimatePresence mode="wait">
@@ -216,7 +285,9 @@ export default function AdminPortfolio() {
                                 items={portfolioData[activeCategory].map((_, index) => `portfolio-${index}`)}
                                 strategy={verticalListSortingStrategy}
                             >
-                                {portfolioData[activeCategory].map((item, index) => (
+                                {portfolioData[activeCategory].map((item, index) => {
+                                    if (showArchived ? !item.archived : item.archived) return null;
+                                    return (
                                     <SortablePortfolioItem
                                         key={`portfolio-${index}`}
                                         id={`portfolio-${index}`}
@@ -226,7 +297,8 @@ export default function AdminPortfolio() {
                                         updateState={updateState}
                                         portfolioData={portfolioData}
                                     />
-                                ))}
+                                    );
+                                })}
                             </SortableContext>
                         </DndContext>
                     ) : <p className="text-muted">Select a category to see its items.</p>}

@@ -7,6 +7,7 @@ import BentoGrid from "./components/BentoGrid";
 
 export default function Portfolio() {
   const [portfolioData, setPortfolioData] = useState(null);
+  const [categoryOrder, setCategoryOrder] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(null);
 
@@ -17,9 +18,14 @@ export default function Portfolio() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
-          setPortfolioData(data);
-          if (Object.keys(data).length > 0) {
-            setActiveTab(Object.keys(data)[0]);
+          const order = data._categoryOrder || Object.keys(data).filter(k => k !== '_categoryOrder');
+          const { _categoryOrder: _, ...categories } = data;
+          setCategoryOrder(order);
+          setPortfolioData(categories);
+          if (order.length > 0) {
+            setActiveTab(order[0]);
+          } else if (Object.keys(categories).length > 0) {
+            setActiveTab(Object.keys(categories)[0]);
           }
         } else {
           setPortfolioData({});
@@ -34,8 +40,8 @@ export default function Portfolio() {
     fetchPortfolioData();
   }, []);
   
-  const categories = portfolioData ? Object.keys(portfolioData) : [];
-  const activeArtworks = activeTab && portfolioData ? portfolioData[activeTab] : [];
+  const categories = categoryOrder.filter(cat => portfolioData && portfolioData[cat]);
+  const activeArtworks = activeTab && portfolioData ? (portfolioData[activeTab] || []).filter(item => !item.archived) : [];
 
   // Check if current category should use bento grid (photography-related)
   const useBentoGrid = activeTab && (
@@ -49,12 +55,12 @@ export default function Portfolio() {
 
   return (
     <motion.div 
-      className="min-h-screen bg-background pt-20 sm:pt-24"
+      className="min-h-screen bg-background"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
     >
-      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <motion.div 
           className="text-center mb-8 sm:mb-12"
           initial={{ y: -20, opacity: 0 }}

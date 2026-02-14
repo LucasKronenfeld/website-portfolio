@@ -109,12 +109,12 @@ export default function AdminFeatured() {
     <div className="space-y-4">
       <h3 className="text-xl font-bold text-text">{title}</h3>
       <div className="p-4 bg-background rounded-md space-y-3 border border-white/10">
-        {Object.keys(data).length === 0 ? <p className="text-muted">No {type} found.</p> : 
-        Object.entries(data).map(([category, items]) => (
+        {Object.keys(data).filter(k => k !== '_categoryOrder').length === 0 ? <p className="text-muted">No {type} found.</p> : 
+        Object.entries(data).filter(([key]) => key !== '_categoryOrder').map(([category, items]) => (
           <div key={category}>
             <h4 className="font-semibold text-lg text-primary">{category}</h4>
             <ul className="list-inside pl-4 space-y-2 mt-2">
-              {items.map((item, index) => (
+              {items.filter(item => !item.archived).map((item, index) => (
                 <li key={index} className="flex items-center gap-4 py-1 text-muted">
                   <button onClick={() => handleToggleFeature(type, category, item.title)} className="focus:outline-none">
                     <FaStar className={`${item.featured ? 'text-yellow-400' : 'text-gray-500 hover:text-yellow-400'} transition-colors`} />

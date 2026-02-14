@@ -16,7 +16,7 @@ export default function Blog() {
         const postsQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(postsQuery);
         const postsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setPosts(postsData);
+        setPosts(postsData.filter(p => !p.archived));
       } catch (error) {
         console.error("Error fetching posts: ", error);
       } finally {
@@ -43,8 +43,8 @@ export default function Blog() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-text pt-20 sm:pt-24">
-      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+    <div className="min-h-screen bg-background text-text">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <motion.div 
           className="text-center mb-8 sm:mb-12"
           initial="hidden"

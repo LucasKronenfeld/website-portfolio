@@ -1,4 +1,5 @@
 // Centralized site links so Navbar, Footer, and Home snapshot agree
+import { normalizeExternalUrl } from "./utils/normalizeExternalUrl";
 export function getSiteLinks() {
   const envGithub = import.meta.env.VITE_GITHUB_URL;
   const envLinkedIn = import.meta.env.VITE_LINKEDIN_URL;
@@ -9,8 +10,8 @@ export function getSiteLinks() {
   const fallbackLinkedIn = 'https://www.linkedin.com/in/lucas-kronenfeld-872040269/';
   const fallbackEmail = 'kronenfeldlucas@gmail.com';
 
-  const github = envGithub || fallbackGithub;
-  const linkedin = envLinkedIn || fallbackLinkedIn;
+  const github = normalizeExternalUrl(envGithub || fallbackGithub);
+  const linkedin = normalizeExternalUrl(envLinkedIn || fallbackLinkedIn);
   const email = envEmail || fallbackEmail;
 
   return { github, linkedin, email };

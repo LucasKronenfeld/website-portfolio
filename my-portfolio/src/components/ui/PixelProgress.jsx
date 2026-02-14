@@ -1,16 +1,25 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { isExternalUrl, normalizeExternalUrl } from '../../utils/normalizeExternalUrl';
 
 // Retro segmented progress display. If value is undefined, just render the label and sublabel.
 export default function PixelProgress({ label, sublabel, value, to }) {
   const segments = 12; // nice even count for chunky look
   const filled = Math.max(0, Math.min(segments, Math.round(((value || 0) / 100) * segments)));
+  const external = isExternalUrl(to);
+  const safeLink = normalizeExternalUrl(to);
 
   return (
     <div className="mb-3">
       <div className="font-mono text-sm">
         {to ? (
-          <Link to={to} className="text-primary hover:underline">{label}</Link>
+          external ? (
+            <a href={safeLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              {label}
+            </a>
+          ) : (
+            <Link to={to} className="text-primary hover:underline">{label}</Link>
+          )
         ) : (
           <span className="text-ink">{label}</span>
         )}
