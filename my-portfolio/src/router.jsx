@@ -29,8 +29,8 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: "resume", element: <Resume /> },
       { path: "portfolio", element: <Portfolio /> },
-      { path: "About", element: <About /> },
-      { path: "Projects", element: <Projects /> },
+      { path: "about", element: <About /> },
+      { path: "projects", element: <Projects /> },
       { path: "blog", element: <Blog /> }, // <-- 2. ADD THE NEW ROUTE
       { path: "blog/:id", element: <BlogPost /> }, // Blog post detail page
 

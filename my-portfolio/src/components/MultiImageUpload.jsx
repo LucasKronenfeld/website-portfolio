@@ -30,7 +30,8 @@ export default function MultiImageUpload({ images = [], onImagesChange, folder =
       onImagesChange([...images, ...urls]);
     } catch (err) {
       console.error('Upload error:', err);
-      setError('Error uploading images: ' + err.message);
+      const code = err?.code ? ` (${err.code})` : '';
+      setError('Error uploading images' + code + ': ' + err.message);
     } finally {
       setUploading(false);
     }
@@ -47,7 +48,8 @@ export default function MultiImageUpload({ images = [], onImagesChange, folder =
       onImagesChange(images.filter(url => url !== urlToRemove));
     } catch (err) {
       console.error('Delete error:', err);
-      setError('Error deleting image: ' + err.message);
+      const code = err?.code ? ` (${err.code})` : '';
+      setError('Error deleting image' + code + ': ' + err.message);
     }
   };
 

@@ -27,7 +27,8 @@ export default function ImageUpload({ currentUrl, onUploadComplete, folder = 'im
       onUploadComplete(downloadURL);
     } catch (err) {
       console.error('Upload error:', err);
-      setError('Error uploading image: ' + err.message);
+      const code = err?.code ? ` (${err.code})` : '';
+      setError('Error uploading image' + code + ': ' + err.message);
     } finally {
       setUploading(false);
     }
@@ -46,7 +47,8 @@ export default function ImageUpload({ currentUrl, onUploadComplete, folder = 'im
       onUploadComplete('');
     } catch (err) {
       console.error('Delete error:', err);
-      setError('Error deleting image: ' + err.message);
+      const code = err?.code ? ` (${err.code})` : '';
+      setError('Error deleting image' + code + ': ' + err.message);
     }
   };
 
